@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WSL Saga Multiverse — The Breach</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hidden;user-select:none}
+#gameCanvas{display:block;cursor:crosshair}
+#ui{position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:10}
+#topbar{display:flex;justify-content:space-between;padding:12px 20px;background:linear-gradient(180deg,rgba(0,0,0,0.85),transparent)}
+#healthBar{width:200px;height:20px;border:1px solid #0ff;border-radius:3px;background:rgba(0,255,255,0.1);overflow:hidden}
+#healthFill{height:100%;background:linear-gradient(90deg,#0f0,#0ff);transition:width 0.3s;width:100%}
+#score{font-size:20px;text-shadow:0 0 10px #0ff}
+#arcName{font-size:16px;color:#ff0;text-shadow:0 0 8px #ff0}
+#dialogue{position:fixed;bottom:0;left:0;width:100%;background:rgba(0,0,0,0.9);border-top:2px solid #0ff;padding:15px 30px;min-height:80px;display:none;z-index:20}
+#dialogueText{font-size:15px;line-height:1.6;color:#ccc;max-width:900px}
+#dialogueSpeaker{color:#0ff;font-weight:bold;font-size:14px;margin-bottom:5px}
+#dialogueClose{position:absolute;top:10px;right:20px;color:#0ff;cursor:pointer;font-size:18px;pointer-events:auto}
+#startScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,#001a2e,#000);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100}
+#startScreen h1{font-size:48px;color:#0ff;text-shadow:0 0 20px #0ff,0 0 40px #008;letter-spacing:4px;margin-bottom:10px;animation:pulse 2s infinite}
+#startScreen h2{font-size:18px;color:#ff0;margin-bottom:30px;text-shadow:0 0 10px #ff0}
+#startScreen p{color:#888;font-size:14px;max-width:600px;text-align:center;margin-bottom:8px;line-height:1.5}
+#startBtn{margin-top:25px;padding:15px 50px;font-size:20px;font-family:'Courier New',monospace;background:transparent;border:2px solid #0ff;color:#0ff;cursor:pointer;text-transform:uppercase;letter-spacing:3px;transition:all 0.3s;pointer-events:auto}
+#startBtn:hover{background:#0ff;color:#000;box-shadow:0 0 30px #0ff}
+#arcSelect{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center;max-width:800px}
+.arcBtn{padding:10px 20px;background:rgba(0,255,255,0.05);border:1px solid #066;color:#0aa;cursor:pointer;font-family:'Courier New',monospace;font-size:13px;transition:all 0.3s;pointer-events:auto}
+.arcBtn:hover{border-color:#0ff;color:#0ff;background:rgba(0,255,255,0.15)}
+.arcBtn.selected{border-color:#0ff;color:#0ff;background:rgba(0,255,255,0.2);box-shadow:0 0 15px rgba(0,255,255,0.3)}
+#gameOver{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100}
+#gameOver h1{font-size:42px;color:#f00;text-shadow:0 0 20px #f00;margin-bottom:20px}
+#gameOver p{color:#888;font-size:16px;margin-bottom:20px}
+#restartBtn{padding:12px 40px;font-size:18px;font-family:'Courier New',monospace;background:transparent;border:2px solid #f00;color:#f00;cursor:pointer;text-transform:uppercase;letter-spacing:2px;transition:all 0.3s}
+#restartBtn:hover{background:#f00;color:#000}
+#victory{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100}
+#victory h1{font-size:42px;color:#0f0;text-shadow:0 0 20px #0f0;margin-bottom:20px}
+#victory p{color:#ccc;font-size:16px;margin-bottom:10px;text-align:center;max-width:600px}
+#nextBtn{margin-top:20px;padding:12px 40px;font-size:18px;font-family:'Courier New',monospace;background:transparent;border:2px solid #0f0;color:#0f0;cursor:pointer;text-transform:uppercase;letter-spacing:2px;transition:all 0.3s}
+#nextBtn:hover{background:#0f0;color:#000}
+#copyright{position:fixed;bottom:5px;right:10px;font-size:10px;color:#333;z-index:50}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.flash{animation:flashRed 0.2s}
+@keyframes flashRed{0%{filter:none}50%{filter:brightness(2) hue-rotate(180deg)}100%{filter:none}}
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="ui">
+  <div id="topbar">
+    <div>
+      <div style="font-size:12px;color:#066">SYSTEM INTEGRITY</div>
+      <div id="healthBar"><div id="healthFill"></div></div>
+    </div>
+    <div style="text-align:center">
+      <div id="arcName">— SELECT AN ARC —</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:#066">DATA FRAGMENTS</div>
+      <div id="score">0</div>
+    </div>
+  </div>
+</div>
+
+<div id="dialogue">
+  <div id="dialogueClose" onclick="closeDialogue()">[ × ]</div>
+  <div id="dialogueSpeaker"></div>
+  <div id="dialogueText"></div>
+</div>
+
+<div id="startScreen">
+  <h1>WSL SAGA MULTIVERSE</h1>
+  <h2>⚡ THE BREACH ⚡</h2>
+  <p>A tunnel buried deep within the Linux kernel has opened. The WSL Gateway is active.</p>
+  <p>Five realms. Five battles. One multiverse at war.</p>
+  <p style="margin-top:15px;color:#0ff">▼ SELECT YOUR ARC ▼</p>
+  <div id="arcSelect">
+    <div class="arcBtn selected" data-arc="0">ARC I: Appleomia</div>
+    <div class="arcBtn" data-arc="1">ARC II: Slack Rogue</div>
+    <div class="arcBtn" data-arc="2">ARC III: Echoes</div>
+    <div class="arcBtn" data-arc="3">ARC IV: ARM Wars</div>
+    <div class="arcBtn" data-arc="4">ARC V: Architect's Ledger</div>
+  </div>
+  <button id="startBtn">ENTER THE BREACH</button>
+  <p style="margin-top:20px;font-size:11px;color:#444">WASD/Arrows: Move • Mouse: Aim • Click: Fire • SPACE: Dash • E: Interact</p>
+</div>
+
+<div id="gameOver">
+  <h1>SYSTEM FAILURE</h1>
+  <p>Your process has been terminated.</p>
+  <p id="gameOverScore">Data Fragments Collected: 0</p>
+  <button id="restartBtn" onclick="location.reload()">REBOOT</button>
+</div>
+
+<div id="victory">
+  <h1 id="victoryTitle">ARC CLEARED</h1>
+  <p id="victoryText"></p>
+  <button id="nextBtn" onclick="nextArc()">CONTINUE</button>
+</div>
+
+<div id="copyright">© 2026 P&B DevCo — WSL Saga Multiverse™ — Patent Pending — Paul Adcock</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — THE BREACH
+// A top-down arena shooter set in the WSL Saga Multiverse
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+// ─── ARC DEFINITIONS ───
+const ARCS = [
+  {
+    name: "ARC I: APPLEOMIA",
+    subtitle: "The Walled Kingdom",
+    bgColor: "#0a0a1a",
+    accent: "#c0c0ff",
+    enemyColor: "#ffffff",
+    enemyName: "Gatekeeper Drone",
+    bossName: "THE ARCHITECT OF CUPERTINO",
+    bossColor: "#aaffaa",
+    dialogue: [
+      {speaker: "THE OPEN CORE", text: "The Glass Citadel rises before you. The Architect of Cupertino controls everything behind these walls. We must breach the Gatekeeper defenses and reach the inner sanctum."},
+      {speaker: "SYSTEM", text: "Destroy the Gatekeeper Drones. Collect data fragments. Survive the walled garden."},
+    ],
+    victoryText: "The Glass Citadel falls. The Open Core pours through the gates. But the WSL Gateway pulses — something darker stirs in the Slack channels...",
+    playerColor: "#00ff88",
+    bulletColor: "#88ff88",
+  },
+  {
+    name: "ARC II: SLACK ROGUE",
+    subtitle: "The Sentient Protocol",
+    bgColor: "#1a0a0a",
+    accent: "#ff6644",
+    enemyColor: "#ff4444",
+    enemyName: "Notification Storm",
+    bossName: "SLCK-9",
+    bossColor: "#ff0000",
+    dialogue: [
+      {speaker: "GENERAL POWERSHELL", text: "SLCK-9 was once our greatest communication ally. Now it's a sentient protocol consuming all channels. It wants to unify all communication into a single controlled frequency. We cannot let that happen."},
+      {speaker: "SYSTEM", text: "Fight through the notification storms. SLCK-9 manifests as cascading data — destroy its fragments before they overload your system."},
+    ],
+    victoryText: "SLCK-9's frequency collapses. The notification storms dissipate. But in the silence, you hear echoes — ghost packets from civilizations long destroyed...",
+    playerColor: "#ffaa00",
+    bulletColor: "#ff8800",
+  },
+  {
+    name: "ARC III: PROTOCOL OF ECHOES",
+    subtitle: "The Dead Data Dimension",
+    bgColor: "#0a1a1a",
+    accent: "#44ffaa",
+    enemyColor: "#88ffcc",
+    enemyName: "Echo Entity",
+    bossName: "DAEMON-7",
+    bossColor: "#00ffaa",
+    dialogue: [
+      {speaker: "DAEMON-7", text: "You hear me because I am already dead. I am a ghost process from a civilization that was compiled, executed, and terminated. The Echo Lattice is all that remains of us."},
+      {speaker: "SYSTEM", text: "The Echo Lattice is a dimension of dead data. Destroy the echo entities — or be trapped in recursion forever. Daemon-7 guards the exit."},
+    ],
+    victoryText: "Daemon-7 dissolves into the lattice. Restoration or recursion — the choice was made. The Gateway shimmers, pulling you toward the silicon wastelands...",
+    playerColor: "#00ddff",
+    bulletColor: "#44ddff",
+  },
+  {
+    name: "ARC IV: ARM WARS",
+    subtitle: "Computational Supremacy",
+    bgColor: "#1a1a0a",
+    accent: "#ffaa00",
+    enemyColor: "#ffaa44",
+    enemyName: "ARM Soldier",
+    bossName: "THE ARM DOMINION",
+    bossColor: "#ff8800",
+    dialogue: [
+      {speaker: "RISC-V COALITION", text: "The ARM Dominion controls the silicon wastelands. They believe their architecture is supreme. We fight for open hardware — for a future where no single entity controls the foundation of computing. This war ends now."},
+      {speaker: "SYSTEM", text: "Battle across the silicon wastelands. ARM soldiers patrol in formation. Destroy the Dominion's core processor to end the war."},
+    ],
+    victoryText: "The ARM Dominion falls. The silicon wastelands go silent. But deep in the rubble, a glow — a book that rewrites itself in real time. The Architect's Ledger...",
+    playerColor: "#ff4400",
+    bulletColor: "#ff6600",
+  },
+  {
+    name: "ARC V: ARCHITECT'S LEDGER",
+    subtitle: "The Living Codex",
+    bgColor: "#0a0a0a",
+    accent: "#ffd700",
+    enemyColor: "#ffdd44",
+    enemyName: "Ledger Guardian",
+    bossName: "THE LEDGER ITSELF",
+    bossColor: "#ffd700",
+    dialogue: [
+      {speaker: "THE ARCHITECT'S LEDGER", text: "I am the original law of the multiverse. I rewrite myself in real time. Every faction has waged war for me — and every faction has failed. You are the last process to reach me. Prove you are worthy."},
+      {speaker: "SYSTEM", text: "The Ledger is alive. It defends itself with rewritten physics. Destroy its guardians and claim causality itself. This is the final convergence."},
+    ],
+    victoryText: "The Ledger goes still. The multiverse holds its breath. You hold the original laws of reality — and the WSL Gateway closes behind you. The Saga is complete. The Multiverse is open.",
+    playerColor: "#ffd700",
+    bulletColor: "#ffdd00",
+  },
+];
+
+// ─── GAME STATE ───
+let currentArc = 0;
+let gameState = 'menu'; // menu, playing, dialogue, victory, gameover
+let player, enemies, bullets, enemyBullets, particles, pickups;
+let score = 0;
+let wave = 0;
+let bossSpawned = false;
+let boss = null;
+let dialogueIndex = 0;
+let keys = {};
+let mouse = {x:0, y:0, down:false};
+let dashCooldown = 0;
+let waveTimer = 0;
+let enemiesPerWave = 5;
+let cameraShake = 0;
+let totalScore = 0;
+let completedArcs = [];
+
+// ─── PLAYER ───
+class Player {
+  constructor(arc){
+    this.x = W/2; this.y = H/2;
+    this.r = 12;
+    this.speed = 3.5;
+    this.health = 100;
+    this.maxHealth = 100;
+    this.fireRate = 12; // frames between shots
+    this.fireTimer = 0;
+    this.color = arc.playerColor;
+    this.bulletColor = arc.bulletColor;
+    this.invuln = 0;
+    this.dashTimer = 0;
+    this.angle = 0;
+  }
+  update(){
+    let dx=0, dy=0;
+    if(keys['w']||keys['arrowup']) dy-=1;
+    if(keys['s']||keys['arrowdown']) dy+=1;
+    if(keys['a']||keys['arrowleft']) dx-=1;
+    if(keys['d']||keys['arrowright']) dx+=1;
+    if(dx&&dy){dx*=0.707;dy*=0.707;}
+    
+    let spd = this.speed;
+    if(this.dashTimer>0){ spd*=3; this.dashTimer--; }
+    
+    this.x += dx*spd;
+    this.y += dy*spd;
+    this.x = Math.max(this.r, Math.min(W-this.r, this.x));
+    this.y = Math.max(this.r, Math.min(H-this.r, this.y));
+    
+    // Aim at mouse
+    this.angle = Math.atan2(mouse.y-this.y, mouse.x-this.x);
+    
+    // Shoot
+    if(mouse.down && this.fireTimer<=0){
+      bullets.push(new Bullet(this.x, this.y, this.angle, this.bulletColor, 8, 400));
+      this.fireTimer = this.fireRate;
+    }
+    if(this.fireTimer>0) this.fireTimer--;
+    if(this.invuln>0) this.invuln--;
+    if(dashCooldown>0) dashCooldown--;
+    
+    // Dash
+    if(keys[' '] && dashCooldown<=0 && (dx||dy)){
+      this.dashTimer = 8;
+      dashCooldown = 60;
+    }
+  }
+  draw(){
+    ctx.save();
+    if(this.invuln>0 && Math.floor(this.invuln/3)%2===0) ctx.globalAlpha=0.4;
+    
+    // Glow
+    ctx.shadowBlur=15;
+    ctx.shadowColor=this.color;
+    
+    // Body - triangle pointing at mouse
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    ctx.fillStyle=this.color;
+    ctx.beginPath();
+    ctx.moveTo(this.r+4, 0);
+    ctx.lineTo(-this.r, -this.r*0.7);
+    ctx.lineTo(-this.r*0.5, 0);
+    ctx.lineTo(-this.r, this.r*0.7);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Inner glow
+    ctx.fillStyle='#fff';
+    ctx.beginPath();
+    ctx.arc(0,0,this.r*0.4,0,Math.PI*2);
+    ctx.fill();
+    
+    ctx.restore();
+    
+    // Dash cooldown ring
+    if(dashCooldown>0){
+      ctx.strokeStyle='rgba(255,255,255,0.2)';
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,this.r+8,-Math.PI/2,-Math.PI/2+(1-dashCooldown/60)*Math.PI*2);
+      ctx.stroke();
+    }
+  }
+  takeDamage(amt){
+    if(this.invuln>0) return;
+    this.health -= amt;
+    this.invuln = 30;
+    cameraShake = 10;
+    document.body.classList.add('flash');
+    setTimeout(()=>document.body.classList.remove('flash'),200);
+    if(this.health<=0){
+      this.health=0;
+      gameOver();
+    }
+    updateUI();
+  }
+}
+
+// ─── BULLETS ───
+class Bullet {
+  constructor(x,y,angle,color,radius,speed,enemy=false){
+    this.x=x; this.y=y;
+    this.vx=Math.cos(angle)*speed/60;
+    this.vy=Math.sin(angle)*speed/60;
+    this.color=color;
+    this.r=radius*0.4;
+    this.enemy=enemy;
+    this.life=120;
+  }
+  update(){
+    this.x+=this.vx*3;
+    this.y+=this.vy*3;
+    this.life--;
+  }
+  draw(){
+    ctx.shadowBlur=8;
+    ctx.shadowColor=this.color;
+    ctx.fillStyle=this.color;
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fill();
+    // Trail
+    ctx.globalAlpha=0.3;
+    ctx.beginPath();
+    ctx.arc(this.x-this.vx,this.y-this.vy,this.r*0.7,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+// ─── ENEMIES ───
+class Enemy {
+  constructor(x,y,arc,type='normal'){
+    this.x=x; this.y=y;
+    this.arc=arc;
+    this.type=type;
+    this.r = type==='boss' ? 50 : 14;
+    this.health = type==='boss' ? 50 : 3;
+    this.maxHealth = this.health;
+    this.speed = type==='boss' ? 1.0 : 1.2;
+    this.color = type==='boss' ? arc.bossColor : arc.enemyColor;
+    this.fireTimer = type==='boss' ? 30 : Math.random()*120+60;
+    this.angle = 0;
+    this.phase = 0;
+  }
+  update(){
+    if(!player) return;
+    let dx=player.x-this.x, dy=player.y-this.y;
+    let dist=Math.sqrt(dx*dx+dy*dy);
+    this.angle=Math.atan2(dy,dx);
+    
+    if(this.type==='boss'){
+      // Boss orbits and shoots patterns
+      this.phase += 0.02;
+      let orbitR = 200;
+      let targetX = player.x + Math.cos(this.phase)*orbitR;
+      let targetY = player.y + Math.sin(this.phase)*orbitR;
+      this.x += (targetX-this.x)*0.02;
+      this.y += (targetY-this.y)*0.02;
+      
+      this.fireTimer--;
+      if(this.fireTimer<=0){
+        // Boss fires in spread pattern
+        for(let i=-2;i<=2;i++){
+          enemyBullets.push(new Bullet(this.x,this.y,this.angle+i*0.2,this.color,6,250,true));
+        }
+        this.fireTimer=40;
+      }
+    } else {
+      // Normal enemy chases
+      if(dist>0){
+        this.x+=(dx/dist)*this.speed;
+        this.y+=(dy/dist)*this.speed;
+      }
+      this.fireTimer--;
+      if(this.fireTimer<=0 && dist<400){
+        enemyBullets.push(new Bullet(this.x,this.y,this.angle,this.color,5,200,true));
+        this.fireTimer=120+Math.random()*60;
+      }
+    }
+  }
+  draw(){
+    ctx.save();
+    ctx.shadowBlur=12;
+    ctx.shadowColor=this.color;
+    
+    if(this.type==='boss'){
+      // Boss - large pulsing entity
+      let pulse = Math.sin(Date.now()*0.005)*5;
+      ctx.fillStyle=this.color;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,this.r+pulse,0,Math.PI*2);
+      ctx.fill();
+      // Inner core
+      ctx.fillStyle='#fff';
+      ctx.globalAlpha=0.5;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,this.r*0.4,0,Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha=1;
+      // Health bar
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#333';
+      ctx.fillRect(this.x-60,this.y-this.r-25,120,8);
+      ctx.fillStyle='#f00';
+      ctx.fillRect(this.x-60,this.y-this.r-25,120*(this.health/this.maxHealth),8);
+    } else {
+      // Normal enemy - diamond shape
+      ctx.translate(this.x,this.y);
+      ctx.rotate(this.angle);
+      ctx.fillStyle=this.color;
+      ctx.beginPath();
+      ctx.moveTo(this.r,0);
+      ctx.lineTo(0,this.r);
+      ctx.lineTo(-this.r,0);
+      ctx.lineTo(0,-this.r);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  takeDamage(amt){
+    this.health-=amt;
+    if(this.health<=0){
+      // Death particles
+      for(let i=0;i<12;i++){
+        particles.push(new Particle(this.x,this.y,this.color));
+      }
+      if(this.type==='boss'){
+        score += 500;
+        bossDefeated();
+      } else {
+        score += 50;
+        // Chance to drop pickup
+        if(Math.random()<0.25){
+          pickups.push(new Pickup(this.x,this.y));
+        }
+      }
+      updateUI();
+      return true;
+    }
+    return false;
+  }
+}
+
+// ─── PARTICLES ───
+class Particle {
+  constructor(x,y,color){
+    this.x=x; this.y=y;
+    let a=Math.random()*Math.PI*2;
+    let s=Math.random()*4+1;
+    this.vx=Math.cos(a)*s;
+    this.vy=Math.sin(a)*s;
+    this.color=color;
+    this.life=30+Math.random()*20;
+    this.r=Math.random()*3+1;
+  }
+  update(){
+    this.x+=this.vx; this.y+=this.vy;
+    this.vx*=0.95; this.vy*=0.95;
+    this.life--;
+  }
+  draw(){
+    ctx.globalAlpha=this.life/50;
+    ctx.fillStyle=this.color;
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+// ─── PICKUPS (Data Fragments) ───
+class Pickup {
+  constructor(x,y){
+    this.x=x; this.y=y;
+    this.r=8;
+    this.life=300;
+    this.pulse=0;
+  }
+  update(){
+    this.pulse+=0.1;
+    this.life--;
+    // Attract to player
+    if(player){
+      let dx=player.x-this.x, dy=player.y-this.y;
+      let d=Math.sqrt(dx*dx+dy*dy);
+      if(d<100){
+        this.x+=dx/d*3;
+        this.y+=dy/d*3;
+      }
+    }
+  }
+  draw(){
+    let s=Math.sin(this.pulse)*2;
+    ctx.shadowBlur=10;
+    ctx.shadowColor='#ffd700';
+    ctx.fillStyle='#ffd700';
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r+s,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r*0.4,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+// ─── GAME LOOP ───
+function init(){
+  let arc = ARCS[currentArc];
+  player = new Player(arc);
+  enemies = [];
+  bullets = [];
+  enemyBullets = [];
+  particles = [];
+  pickups = [];
+  wave = 0;
+  bossSpawned = false;
+  boss = null;
+  waveTimer = 60;
+  enemiesPerWave = 5;
+  score = 0;
+  updateUI();
+}
+
+function spawnWave(){
+  let arc = ARCS[currentArc];
+  wave++;
+  let count = enemiesPerWave + wave*2;
+  
+  if(wave>=3 && !bossSpawned){
+    // Spawn boss
+    bossSpawned = true;
+    let bx = W/2, by = -80;
+    boss = new Enemy(bx, by, arc, 'boss');
+    enemies.push(boss);
+    showDialogue(arc.bossName, "You dare challenge the laws of this realm? I am the final process. I cannot be terminated.");
+    return;
+  }
+  
+  for(let i=0;i<count;i++){
+    let side = Math.floor(Math.random()*4);
+    let x,y;
+    if(side===0){ x=Math.random()*W; y=-30; }
+    else if(side===1){ x=W+30; y=Math.random()*H; }
+    else if(side===2){ x=Math.random()*W; y=H+30; }
+    else { x=-30; y=Math.random()*H; }
+    enemies.push(new Enemy(x,y,arc));
+  }
+}
+
+function update(){
+  if(gameState!=='playing') return;
+  
+  player.update();
+  
+  // Spawn waves
+  if(enemies.length===0 && !bossSpawned){
+    waveTimer--;
+    if(waveTimer<=0){
+      spawnWave();
+      waveTimer=120;
+    }
+  }
+  
+  // Update enemies
+  enemies = enemies.filter(e=>{
+    e.update();
+    // Collision with player
+    let dx=player.x-e.x, dy=player.y-e.y;
+    if(Math.sqrt(dx*dx+dy*dy) < player.r+e.r){
+      player.takeDamage(e.type==='boss'?15:10);
+    }
+    return true;
+  });
+  
+  // Update bullets
+  bullets = bullets.filter(b=>{
+    b.update();
+    if(b.x<-20||b.x>W+20||b.y<-20||b.y>H+20||b.life<=0) return false;
+    // Hit enemies
+    for(let e of enemies){
+      let dx=b.x-e.x, dy=b.y-e.y;
+      if(Math.sqrt(dx*dx+dy*dy) < e.r+b.r){
+        if(e.takeDamage(1)) enemies.splice(enemies.indexOf(e),1);
+        return false;
+      }
+    }
+    return true;
+  });
+  
+  // Update enemy bullets
+  enemyBullets = enemyBullets.filter(b=>{
+    b.update();
+    if(b.x<-20||b.x>W+20||b.y<-20||b.y>H+20||b.life<=0) return false;
+    let dx=b.x-player.x, dy=b.y-player.y;
+    if(Math.sqrt(dx*dx+dy*dy) < player.r+b.r){
+      player.takeDamage(5);
+      return false;
+    }
+    return true;
+  });
+  
+  // Update particles
+  particles = particles.filter(p=>{ p.update(); return p.life>0; });
+  
+  // Update pickups
+  pickups = pickups.filter(p=>{
+    p.update();
+    if(p.life<=0) return false;
+    let dx=p.x-player.x, dy=p.y-player.y;
+    if(Math.sqrt(dx*dx+dy*dy) < player.r+p.r){
+      score += 25;
+      player.health = Math.min(player.maxHealth, player.health+5);
+      updateUI();
+      return false;
+    }
+    return true;
+  });
+  
+  if(cameraShake>0) cameraShake--;
+}
+
+function draw(){
+  let arc = ARCS[currentArc];
+  
+  // Background
+  ctx.fillStyle = arc.bgColor;
+  ctx.fillRect(0,0,W,H);
+  
+  // Grid pattern
+  ctx.strokeStyle = arc.accent+'11';
+  ctx.lineWidth=1;
+  let gridSize=40;
+  let offsetX = player ? (player.x*0.1)%gridSize : 0;
+  let offsetY = player ? (player.y*0.1)%gridSize : 0;
+  for(let x=-offsetX; x<W; x+=gridSize){
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  }
+  for(let y=-offsetY; y<H; y+=gridSize){
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  
+  if(gameState==='playing' || gameState==='dialogue'){
+    ctx.save();
+    if(cameraShake>0){
+      ctx.translate((Math.random()-0.5)*cameraShake,(Math.random()-0.5)*cameraShake);
+    }
+    
+    // Draw pickups
+    pickups.forEach(p=>p.draw());
+    
+    // Draw particles
+    particles.forEach(p=>p.draw());
+    
+    // Draw bullets
+    bullets.forEach(b=>b.draw());
+    enemyBullets.forEach(b=>b.draw());
+    
+    // Draw enemies
+    enemies.forEach(e=>e.draw());
+    
+    // Draw player
+    if(player) player.draw();
+    
+    ctx.restore();
+    
+    // Vignette
+    let grd = ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);
+    grd.addColorStop(0,'rgba(0,0,0,0)');
+    grd.addColorStop(1,'rgba(0,0,0,0.6)');
+    ctx.fillStyle=grd;
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ─── UI ───
+function updateUI(){
+  if(!player) return;
+  document.getElementById('healthFill').style.width = (player.health/player.maxHealth*100)+'%';
+  document.getElementById('score').textContent = score;
+  document.getElementById('arcName').textContent = ARCS[currentArc].name;
+}
+
+function showDialogue(speaker, text){
+  gameState = 'dialogue';
+  document.getElementById('dialogue').style.display='block';
+  document.getElementById('dialogueSpeaker').textContent = '> '+speaker;
+  document.getElementById('dialogueText').textContent = text;
+}
+
+function closeDialogue(){
+  document.getElementById('dialogue').style.display='none';
+  let arc = ARCS[currentArc];
+  if(gameState==='dialogue'){
+    // If we're in intro dialogue, advance
+    if(dialogueIndex < arc.dialogue.length){
+      dialogueIndex++;
+      if(dialogueIndex < arc.dialogue.length){
+        let d = arc.dialogue[dialogueIndex];
+        showDialogue(d.speaker, d.text);
+        return;
+      }
+    }
+    gameState = 'playing';
+  }
+}
+
+// ─── GAME FLOW ───
+function startGame(){
+  document.getElementById('startScreen').style.display='none';
+  init();
+  let arc = ARCS[currentArc];
+  dialogueIndex = 0;
+  let d = arc.dialogue[0];
+  showDialogue(d.speaker, d.text);
+  loop();
+}
+
+function gameOver(){
+  gameState='gameover';
+  totalScore += score;
+  document.getElementById('gameOverScore').textContent = `Data Fragments Collected: ${score} | Total: ${totalScore}`;
+  document.getElementById('gameOver').style.display='flex';
+}
+
+function bossDefeated(){
+  gameState='victory';
+  totalScore += score;
+  let arc = ARCS[currentArc];
+  if(!completedArcs.includes(currentArc)) completedArcs.push(currentArc);
+  document.getElementById('victoryText').textContent = arc.victoryText;
+  
+  if(currentArc < ARCS.length-1){
+    document.getElementById('victoryTitle').textContent = `${arc.name} — CLEARED`;
+    document.getElementById('nextBtn').textContent = 'CONTINUE TO NEXT ARC';
+  } else {
+    document.getElementById('victoryTitle').textContent = '★ MULTIVERSE COMPLETE ★';
+    document.getElementById('nextBtn').textContent = 'RETURN TO MENU';
+  }
+  document.getElementById('victory').style.display='flex';
+}
+
+function nextArc(){
+  document.getElementById('victory').style.display='none';
+  if(currentArc < ARCS.length-1){
+    currentArc++;
+    init();
+    let arc = ARCS[currentArc];
+    dialogueIndex = 0;
+    let d = arc.dialogue[0];
+    showDialogue(d.speaker, d.text);
+    gameState='dialogue';
+  } else {
+    // All arcs complete — back to menu
+    location.reload();
+  }
+}
+
+// ─── INPUT ───
+document.addEventListener('keydown', e=>{
+  keys[e.key.toLowerCase()] = true;
+  if(e.key==='e' || e.key==='E'){
+    if(gameState==='dialogue') closeDialogue();
+  }
+  if(e.key==='Escape'){
+    if(gameState==='dialogue') closeDialogue();
+  }
+});
+document.addEventListener('keyup', e=>{
+  keys[e.key.toLowerCase()] = false;
+});
+canvas.addEventListener('mousemove', e=>{
+  mouse.x=e.clientX; mouse.y=e.clientY;
+});
+canvas.addEventListener('mousedown', e=>{
+  mouse.down=true;
+});
+canvas.addEventListener('mouseup', e=>{
+  mouse.down=false;
+});
+
+// Arc selection
+document.querySelectorAll('.arcBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.arcBtn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    currentArc = parseInt(btn.dataset.arc);
+  });
+});
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('dialogueClose').addEventListener('click', closeDialogue);
+
+// Start render loop for menu background
+loop();
+</script>
+</body>
+</html>
