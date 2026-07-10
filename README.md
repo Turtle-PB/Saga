@@ -83,6 +83,40 @@ Features all 5 arcs with AI-generated cinematic artwork, Ken Burns zoom effects,
 
 ---
 
+## 🛠️ Developer Setup
+
+> Only needed if you want to contribute or run quality checks locally.
+> Playing the game requires no tooling — just open `index.html` in any modern browser.
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) v18 or later
+
+### Install dev dependencies
+```bash
+npm install
+```
+
+### Available scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run lint` | Run ESLint on HTML game files and JS modules |
+| `npm test` | Run the Jest test suite |
+
+### Project structure
+```
+├── index.html                  # Main game (GitHub Pages entry point)
+├── WSL_Saga_Multiverse_Game.html # Standalone offline copy
+├── js/
+│   ├── game-config.js          # Arc definitions (data only, importable for tests)
+│   └── game-utils.js           # Pure utility functions (collision detection, etc.)
+└── tests/
+    ├── game-config.test.js     # Validates every arc's required fields and colour values
+    └── game-utils.test.js      # Unit tests for collision-detection math
+```
+
+---
+
 ## 🧠 Mental Health Mission
 
 > *"Every civilization births its mythology. The Greeks had Olympus. The Norse had Yggdrasil. We have the kernel."*

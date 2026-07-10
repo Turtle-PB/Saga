@@ -1,0 +1,16 @@
+{
+  "name": "wsl-saga-multiverse",
+  "version": "1.0.0",
+  "description": "WSL Saga Multiverse – The Breach: a top-down arena shooter",
+  "private": true,
+  "scripts": {
+    "lint": "eslint index.html WSL_Saga_Multiverse_Game.html js/",
+    "test": "jest",
+    "lint:fix": "eslint --fix index.html WSL_Saga_Multiverse_Game.html js/"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-plugin-html": "^8.1.1",
+    "jest": "^29.7.0"
+  }
+}
