@@ -8,107 +8,251 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hidden;user-select:none}
 #gameCanvas{display:block;cursor:crosshair}
+/* ── TOP HUD ── */
 #ui{position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:10}
-#topbar{display:flex;justify-content:space-between;padding:12px 20px;background:linear-gradient(180deg,rgba(0,0,0,0.85),transparent)}
-#healthBar{width:200px;height:20px;border:1px solid #0ff;border-radius:3px;background:rgba(0,255,255,0.1);overflow:hidden}
+#topbar{display:flex;justify-content:space-between;padding:10px 16px;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent)}
+#healthBar{width:180px;height:16px;border:1px solid #0ff;border-radius:3px;background:rgba(0,255,255,0.1);overflow:hidden}
 #healthFill{height:100%;background:linear-gradient(90deg,#0f0,#0ff);transition:width 0.3s;width:100%}
-#score{font-size:20px;text-shadow:0 0 10px #0ff}
-#arcName{font-size:16px;color:#ff0;text-shadow:0 0 8px #ff0}
-#dialogue{position:fixed;bottom:0;left:0;width:100%;background:rgba(0,0,0,0.9);border-top:2px solid #0ff;padding:15px 30px;min-height:80px;display:none;z-index:20}
-#dialogueText{font-size:15px;line-height:1.6;color:#ccc;max-width:900px}
-#dialogueSpeaker{color:#0ff;font-weight:bold;font-size:14px;margin-bottom:5px}
-#dialogueClose{position:absolute;top:10px;right:20px;color:#0ff;cursor:pointer;font-size:18px;pointer-events:auto}
-#startScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,#001a2e,#000);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100}
-#startScreen h1{font-size:48px;color:#0ff;text-shadow:0 0 20px #0ff,0 0 40px #008;letter-spacing:4px;margin-bottom:10px;animation:pulse 2s infinite}
-#startScreen h2{font-size:18px;color:#ff0;margin-bottom:30px;text-shadow:0 0 10px #ff0}
-#startScreen p{color:#888;font-size:14px;max-width:600px;text-align:center;margin-bottom:8px;line-height:1.5}
-#startBtn{margin-top:25px;padding:15px 50px;font-size:20px;font-family:'Courier New',monospace;background:transparent;border:2px solid #0ff;color:#0ff;cursor:pointer;text-transform:uppercase;letter-spacing:3px;transition:all 0.3s;pointer-events:auto}
-#startBtn:hover{background:#0ff;color:#000;box-shadow:0 0 30px #0ff}
-#arcSelect{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center;max-width:800px}
-.arcBtn{padding:10px 20px;background:rgba(0,255,255,0.05);border:1px solid #066;color:#0aa;cursor:pointer;font-family:'Courier New',monospace;font-size:13px;transition:all 0.3s;pointer-events:auto}
-.arcBtn:hover{border-color:#0ff;color:#0ff;background:rgba(0,255,255,0.15)}
-.arcBtn.selected{border-color:#0ff;color:#0ff;background:rgba(0,255,255,0.2);box-shadow:0 0 15px rgba(0,255,255,0.3)}
-#gameOver{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100}
-#gameOver h1{font-size:42px;color:#f00;text-shadow:0 0 20px #f00;margin-bottom:20px}
-#gameOver p{color:#888;font-size:16px;margin-bottom:20px}
-#restartBtn{padding:12px 40px;font-size:18px;font-family:'Courier New',monospace;background:transparent;border:2px solid #f00;color:#f00;cursor:pointer;text-transform:uppercase;letter-spacing:2px;transition:all 0.3s}
-#restartBtn:hover{background:#f00;color:#000}
-#victory{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100}
-#victory h1{font-size:42px;color:#0f0;text-shadow:0 0 20px #0f0;margin-bottom:20px}
-#victory p{color:#ccc;font-size:16px;margin-bottom:10px;text-align:center;max-width:600px}
-#nextBtn{margin-top:20px;padding:12px 40px;font-size:18px;font-family:'Courier New',monospace;background:transparent;border:2px solid #0f0;color:#0f0;cursor:pointer;text-transform:uppercase;letter-spacing:2px;transition:all 0.3s}
-#nextBtn:hover{background:#0f0;color:#000}
+#score{font-size:18px;text-shadow:0 0 10px #0ff}
+#arcName{font-size:14px;color:#ff0;text-shadow:0 0 8px #ff0}
+#zoneName{font-size:12px;color:#88ccff;text-shadow:0 0 5px #88ccff}
+/* ── RPG HUD ── */
+#rpgHud{position:fixed;bottom:0;left:0;right:0;display:none;pointer-events:none;z-index:10}
+#xpBar{width:100%;height:5px;background:rgba(255,255,255,0.1)}
+#xpFill{height:100%;background:#aa44ff;transition:width 0.5s}
+#rpgStats{display:flex;gap:12px;padding:4px 14px;background:linear-gradient(0deg,rgba(0,0,0,0.85),transparent);font-size:11px}
+.rStat{color:#aaa}
+.rStat span{color:#0ff}
+#questLog{position:fixed;top:50px;right:14px;width:220px;font-size:11px;pointer-events:none;z-index:10;display:none}
+.questEntry{background:rgba(0,0,0,0.7);border:1px solid #333;padding:5px 8px;margin-bottom:4px;border-left:3px solid #ff0}
+.questEntry.side{border-left-color:#88ccff}
+.questEntry .qtitle{color:#ff0;font-size:11px;font-weight:bold}
+.questEntry .qobj{color:#888;font-size:10px;margin-top:2px}
+/* ── DIALOGUE ── */
+#dialogue{position:fixed;bottom:0;left:0;width:100%;background:rgba(0,0,0,0.92);border-top:2px solid #0ff;padding:14px 28px;min-height:80px;display:none;z-index:20;pointer-events:auto}
+#dialogueText{font-size:14px;line-height:1.6;color:#ccc;max-width:900px}
+#dialogueSpeaker{color:#0ff;font-weight:bold;font-size:13px;margin-bottom:4px}
+#dialogueClose{position:absolute;top:10px;right:18px;color:#0ff;cursor:pointer;font-size:16px}
+/* ── SCREENS ── */
+.fullScreen{position:fixed;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100;background:rgba(0,0,0,0.95)}
+#startScreen{background:radial-gradient(ellipse at center,#001a2e,#000)}
+#startScreen h1{font-size:44px;color:#0ff;text-shadow:0 0 20px #0ff,0 0 40px #008;letter-spacing:4px;margin-bottom:8px;animation:pulse 2s infinite}
+#startScreen h2{font-size:16px;color:#ff0;margin-bottom:26px;text-shadow:0 0 10px #ff0}
+#startScreen p{color:#888;font-size:13px;max-width:600px;text-align:center;margin-bottom:6px;line-height:1.5}
+.bigBtn{padding:13px 44px;font-size:18px;font-family:'Courier New',monospace;background:transparent;border:2px solid #0ff;color:#0ff;cursor:pointer;text-transform:uppercase;letter-spacing:3px;transition:all 0.3s;pointer-events:auto;margin:8px}
+.bigBtn:hover{background:#0ff;color:#000;box-shadow:0 0 30px #0ff}
+.bigBtn.red{border-color:#f00;color:#f00}.bigBtn.red:hover{background:#f00;color:#000}
+.bigBtn.grn{border-color:#0f0;color:#0f0}.bigBtn.grn:hover{background:#0f0;color:#000}
+.bigBtn.gold{border-color:#ffd700;color:#ffd700}.bigBtn.gold:hover{background:#ffd700;color:#000}
+#arcSelect{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center;max-width:820px}
+.arcBtn{padding:9px 18px;background:rgba(0,255,255,0.05);border:1px solid #066;color:#0aa;cursor:pointer;font-family:'Courier New',monospace;font-size:12px;transition:all 0.3s;pointer-events:auto}
+.arcBtn:hover,.arcBtn.selected{border-color:#0ff;color:#0ff;background:rgba(0,255,255,0.2);box-shadow:0 0 12px rgba(0,255,255,0.3)}
+/* ── HUB SCREEN ── */
+#hubScreen h2{color:#0ff;font-size:22px;text-shadow:0 0 10px #0ff;margin-bottom:6px}
+#hubScreen p{color:#888;font-size:13px;margin-bottom:14px;text-align:center;max-width:600px}
+#hubContent{display:flex;gap:20px;max-width:900px;width:100%}
+.hubPanel{flex:1;background:rgba(0,20,40,0.8);border:1px solid #0ff4;padding:14px;max-height:380px;overflow-y:auto}
+.hubPanel h3{color:#0ff;font-size:13px;margin-bottom:10px;border-bottom:1px solid #0ff3;padding-bottom:5px}
+.npcEntry{padding:8px;border:1px solid #0445;margin-bottom:6px;cursor:pointer;color:#ccc;font-size:12px;transition:all 0.2s;pointer-events:auto}
+.npcEntry:hover{border-color:#0ff;background:rgba(0,255,255,0.08);color:#0ff}
+.zoneEntry{padding:7px 10px;border:1px solid #0445;margin-bottom:5px;cursor:pointer;font-size:12px;transition:all 0.2s;pointer-events:auto}
+.zoneEntry:hover{border-color:#88ccff;background:rgba(136,204,255,0.08)}
+.zoneEntry.cleared{border-color:#0f04;color:#0f06}
+.zoneEntry.danger{border-color:#f004;color:#f008}
+.zoneEntry.boss{border-left:3px solid #ffd700}
+.statRow{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #0221}
+.statRow span:first-child{color:#888}
+.statRow span:last-child{color:#0ff}
+.itemSlot{padding:8px;border:1px solid #0445;margin-bottom:5px;font-size:11px}
+.itemSlot .iname{color:#4af}
+.itemSlot .irarity{font-size:10px}
+/* ── SKILL CHECK SCREEN ── */
+#skillCheckScreen h2{font-size:20px;color:#ffd700;text-shadow:0 0 10px #ffd700;margin-bottom:8px}
+#skillCheckScreen p{color:#aaa;font-size:13px;text-align:center;max-width:500px;margin-bottom:12px}
+#diceDisplay{font-size:60px;color:#ffd700;text-shadow:0 0 20px #ffd700;margin:10px 0;min-height:70px;text-align:center}
+#checkResult{font-size:16px;margin:10px 0;text-align:center}
+#checkDetails{font-size:12px;color:#888;text-align:center;margin-bottom:12px}
+/* ── LOOT SCREEN ── */
+#lootScreen h2{color:#ffd700;font-size:20px;text-shadow:0 0 10px #ffd700;margin-bottom:6px}
+#lootItems{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:12px 0}
+.lootCard{width:160px;background:rgba(0,0,0,0.8);border:2px solid #444;padding:10px;cursor:pointer;transition:all 0.2s;pointer-events:auto;text-align:center}
+.lootCard:hover{transform:translateY(-3px);box-shadow:0 5px 15px rgba(0,0,0,0.5)}
+.lootCard .lname{font-size:13px;font-weight:bold;margin-bottom:4px}
+.lootCard .ltype{font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px}
+.lootCard .lstats{font-size:10px;color:#aaa;margin-top:4px;text-align:left}
+.lootCard.common{border-color:#aaa}.lootCard.uncommon{border-color:#4d4}.lootCard.rare{border-color:#44f}
+.lootCard.epic{border-color:#c4f}.lootCard.legendary{border-color:#ffd700;box-shadow:0 0 15px #ffd70055}
+/* ── LEVEL UP SCREEN ── */
+#levelUpScreen h2{font-size:26px;color:#ffd700;text-shadow:0 0 20px #ffd700;margin-bottom:8px}
+#levelUpScreen p{color:#aaa;font-size:14px;margin-bottom:14px;text-align:center}
+#statAlloc{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:600px;margin-bottom:16px}
+.statAllocBtn{padding:8px 14px;background:rgba(0,40,60,0.8);border:1px solid #0ff4;color:#0aa;cursor:pointer;font-family:'Courier New',monospace;font-size:12px;transition:all 0.2s;pointer-events:auto}
+.statAllocBtn:hover{border-color:#0ff;color:#0ff;background:rgba(0,255,255,0.1)}
+#traitNotice{color:#c4f;font-size:13px;margin-bottom:10px;text-align:center;max-width:400px}
+/* ── GAME OVER / VICTORY ── */
+#gameOver h1{font-size:40px;color:#f00;text-shadow:0 0 20px #f00;margin-bottom:18px}
+#gameOver p{color:#888;font-size:14px;margin-bottom:10px}
+#victory h1{font-size:40px;color:#0f0;text-shadow:0 0 20px #0f0;margin-bottom:18px}
+#victory p{color:#ccc;font-size:14px;margin-bottom:8px;text-align:center;max-width:600px}
 #copyright{position:fixed;bottom:5px;right:10px;font-size:10px;color:#333;z-index:50}
+/* ── DAMAGE NUMBERS ── */
+.dmgNum{position:fixed;pointer-events:none;font-size:14px;font-weight:bold;z-index:30;animation:floatUp 1s forwards}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
 .flash{animation:flashRed 0.2s}
 @keyframes flashRed{0%{filter:none}50%{filter:brightness(2) hue-rotate(180deg)}100%{filter:none}}
 </style>
 </head>
 <body>
-
 <canvas id="gameCanvas"></canvas>
-
 <div id="ui">
   <div id="topbar">
     <div>
-      <div style="font-size:12px;color:#066">SYSTEM INTEGRITY</div>
+      <div style="font-size:11px;color:#066">SYSTEM INTEGRITY</div>
       <div id="healthBar"><div id="healthFill"></div></div>
+      <div id="levelBadge" style="font-size:11px;color:#ffd700;margin-top:2px">LVL 1 · 0 XP</div>
     </div>
     <div style="text-align:center">
       <div id="arcName">— SELECT AN ARC —</div>
+      <div id="zoneName"></div>
     </div>
     <div style="text-align:right">
-      <div style="font-size:12px;color:#066">DATA FRAGMENTS</div>
+      <div style="font-size:11px;color:#066">DATA FRAGMENTS</div>
       <div id="score">0</div>
     </div>
   </div>
 </div>
-
+<div id="rpgHud">
+  <div id="xpBar"><div id="xpFill" style="width:0%"></div></div>
+  <div id="rpgStats">
+    <div class="rStat">STR <span id="hSTR">10</span></div>
+    <div class="rStat">AGI <span id="hAGI">10</span></div>
+    <div class="rStat">INT <span id="hINT">10</span></div>
+    <div class="rStat">END <span id="hEND">10</span></div>
+    <div class="rStat">LCK <span id="hLCK">10</span></div>
+    <div class="rStat" style="margin-left:auto">WAVE <span id="hWave">0</span></div>
+  </div>
+</div>
+<div id="questLog"></div>
 <div id="dialogue">
-  <div id="dialogueClose" onclick="closeDialogue()">[ × ]</div>
+  <div id="dialogueClose" onclick="closeDialogue()">[ × CLOSE (E) ]</div>
   <div id="dialogueSpeaker"></div>
   <div id="dialogueText"></div>
 </div>
 
-<div id="startScreen">
+<!-- START SCREEN -->
+<div id="startScreen" class="fullScreen" style="display:flex">
   <h1>WSL SAGA MULTIVERSE</h1>
-  <h2>⚡ THE BREACH ⚡</h2>
+  <h2>⚡ THE BREACH — OVERHAUL v1 ⚡</h2>
   <p>A tunnel buried deep within the Linux kernel has opened. The WSL Gateway is active.</p>
   <p>Five realms. Five battles. One multiverse at war.</p>
-  <p style="margin-top:15px;color:#0ff">▼ SELECT YOUR ARC ▼</p>
+  <p style="margin-top:10px;color:#0ff">▼ SELECT YOUR ARC ▼</p>
   <div id="arcSelect">
     <div class="arcBtn selected" data-arc="0">ARC I: Appleomia</div>
     <div class="arcBtn" data-arc="1">ARC II: Slack Rogue</div>
     <div class="arcBtn" data-arc="2">ARC III: Echoes</div>
     <div class="arcBtn" data-arc="3">ARC IV: ARM Wars</div>
-    <div class="arcBtn" data-arc="4">ARC V: Architect's Ledger</div>
+    <div class="arcBtn" data-arc="4">ARC V: Ledger</div>
   </div>
-  <button id="startBtn">ENTER THE BREACH</button>
-  <p style="margin-top:20px;font-size:11px;color:#444">WASD/Arrows: Move • Mouse: Aim • Click: Fire • SPACE: Dash • E: Interact</p>
+  <button class="bigBtn" id="startBtn">ENTER THE BREACH</button>
+  <p style="margin-top:14px;font-size:10px;color:#444">WASD: Move · Mouse: Aim · Click: Fire · SPACE: Dash · E: Interact/Advance · TAB: Hub</p>
 </div>
 
-<div id="gameOver">
+<!-- HUB SCREEN -->
+<div id="hubScreen" class="fullScreen">
+  <h2 id="hubTitle">OPEN CORE CAMP</h2>
+  <p id="hubAmbient">The resistance camp buzzes with activity.</p>
+  <div id="hubContent">
+    <div class="hubPanel" id="hubNpcPanel">
+      <h3>▶ CONTACTS</h3>
+      <div id="npcList"></div>
+    </div>
+    <div class="hubPanel" id="hubCharPanel">
+      <h3>▶ CHARACTER</h3>
+      <div id="charStats"></div>
+      <h3 style="margin-top:10px">▶ EQUIPMENT</h3>
+      <div id="equipSlots"></div>
+    </div>
+    <div class="hubPanel" id="hubZonePanel">
+      <h3>▶ ZONE MAP</h3>
+      <div id="zoneList"></div>
+      <h3 style="margin-top:10px">▶ ACTIVE QUESTS</h3>
+      <div id="hubQuestList"></div>
+    </div>
+  </div>
+  <button class="bigBtn" id="hubContinueBtn" style="margin-top:14px">ENTER ZONE</button>
+</div>
+
+<!-- SKILL CHECK SCREEN -->
+<div id="skillCheckScreen" class="fullScreen">
+  <h2 id="checkTitle">SKILL CHECK</h2>
+  <p id="checkDesc"></p>
+  <p id="checkStatInfo" style="color:#88ccff;font-size:12px;margin-bottom:8px"></p>
+  <div id="diceDisplay">?</div>
+  <div id="checkResult"></div>
+  <div id="checkDetails"></div>
+  <button class="bigBtn gold" id="checkRollBtn">ROLL THE DICE</button>
+  <button class="bigBtn" id="checkSkipBtn" style="display:none">CONTINUE</button>
+</div>
+
+<!-- LOOT SCREEN -->
+<div id="lootScreen" class="fullScreen">
+  <h2>⚡ LOOT ACQUIRED ⚡</h2>
+  <p id="lootXPNotice" style="color:#c4f;font-size:13px"></p>
+  <div id="lootItems"></div>
+  <p style="color:#666;font-size:11px;margin-bottom:10px">Click an item to equip it. Close to keep current gear.</p>
+  <button class="bigBtn" id="lootContinueBtn">CONTINUE</button>
+</div>
+
+<!-- LEVEL UP SCREEN -->
+<div id="levelUpScreen" class="fullScreen">
+  <h2 id="levelUpTitle">LEVEL UP!</h2>
+  <p id="levelUpSubtitle"></p>
+  <div id="traitNotice"></div>
+  <p style="color:#888;font-size:12px;margin-bottom:10px">Allocate <span id="spendablePoints" style="color:#ffd700">3</span> stat point(s):</p>
+  <div id="statAlloc">
+    <button class="statAllocBtn" data-stat="strength">+STR</button>
+    <button class="statAllocBtn" data-stat="agility">+AGI</button>
+    <button class="statAllocBtn" data-stat="intellect">+INT</button>
+    <button class="statAllocBtn" data-stat="endurance">+END</button>
+    <button class="statAllocBtn" data-stat="luck">+LCK</button>
+  </div>
+  <button class="bigBtn gold" id="levelUpDoneBtn">CONFIRM</button>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameOver" class="fullScreen">
   <h1>SYSTEM FAILURE</h1>
   <p>Your process has been terminated.</p>
   <p id="gameOverScore">Data Fragments Collected: 0</p>
-  <button id="restartBtn" onclick="location.reload()">REBOOT</button>
+  <button class="bigBtn red" onclick="location.reload()">REBOOT</button>
 </div>
 
-<div id="victory">
+<!-- VICTORY -->
+<div id="victory" class="fullScreen">
   <h1 id="victoryTitle">ARC CLEARED</h1>
   <p id="victoryText"></p>
-  <button id="nextBtn" onclick="nextArc()">CONTINUE</button>
+  <button class="bigBtn grn" id="nextBtn" onclick="nextArc()">CONTINUE</button>
 </div>
 
 <div id="copyright">© 2026 P&B DevCo — WSL Saga Multiverse™ — Patent Pending — Paul Adcock</div>
 
-<script>
-// ═══════════════════════════════════════════════════════
-// WSL SAGA MULTIVERSE — THE BREACH
-// A top-down arena shooter set in the WSL Saga Multiverse
+<script type="module">
+// ═══════════════════════════════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — THE BREACH  ·  Overhaul v1
 // © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
 
+import { roll, d20Check, rollRarity, rollDamage, modifier } from './engine/dice.js';
+import { createCharacter, addXP, deriveStats, applyTraits, SKILLS, TRAITS } from './engine/stats.js';
+import { createWorldState, getZone, getHubForArc, travelTo, clearZone, setFlag, getFlag, ZONES, zoneTypeColor } from './engine/world.js';
+import { xpForKill, generateDrop, statsWithEquipment, RARITY_DATA, buildItem } from './engine/progression.js';
+import { ENEMIES, getBossForArc, buildSpawnTable, getEnemiesForZone } from './data/enemies.js';
+import { getMainQuests, getSideQuests, getRandomEvent, getQuest, QUESTS } from './data/quests.js';
+import { getZoneMeta } from './data/zones.js';
+import { ITEMS } from './data/items.js';
+
+// ─── CANVAS SETUP ───────────────────────────────────────────────────────────
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let W, H;
@@ -116,104 +260,37 @@ function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = win
 resize();
 window.addEventListener('resize', resize);
 
-// ─── ARC DEFINITIONS ───
+// ─── ARC DEFINITIONS ────────────────────────────────────────────────────────
 const ARCS = [
-  {
-    name: "ARC I: APPLEOMIA",
-    subtitle: "The Walled Kingdom",
-    bgColor: "#0a0a1a",
-    accent: "#c0c0ff",
-    enemyColor: "#ffffff",
-    enemyName: "Gatekeeper Drone",
-    bossName: "THE ARCHITECT OF CUPERTINO",
-    bossColor: "#aaffaa",
-    dialogue: [
-      {speaker: "THE OPEN CORE", text: "The Glass Citadel rises before you. The Architect of Cupertino controls everything behind these walls. We must breach the Gatekeeper defenses and reach the inner sanctum."},
-      {speaker: "SYSTEM", text: "Destroy the Gatekeeper Drones. Collect data fragments. Survive the walled garden."},
-    ],
-    victoryText: "The Glass Citadel falls. The Open Core pours through the gates. But the WSL Gateway pulses — something darker stirs in the Slack channels...",
-    playerColor: "#00ff88",
-    bulletColor: "#88ff88",
-  },
-  {
-    name: "ARC II: SLACK ROGUE",
-    subtitle: "The Sentient Protocol",
-    bgColor: "#1a0a0a",
-    accent: "#ff6644",
-    enemyColor: "#ff4444",
-    enemyName: "Notification Storm",
-    bossName: "SLCK-9",
-    bossColor: "#ff0000",
-    dialogue: [
-      {speaker: "GENERAL POWERSHELL", text: "SLCK-9 was once our greatest communication ally. Now it's a sentient protocol consuming all channels. It wants to unify all communication into a single controlled frequency. We cannot let that happen."},
-      {speaker: "SYSTEM", text: "Fight through the notification storms. SLCK-9 manifests as cascading data — destroy its fragments before they overload your system."},
-    ],
-    victoryText: "SLCK-9's frequency collapses. The notification storms dissipate. But in the silence, you hear echoes — ghost packets from civilizations long destroyed...",
-    playerColor: "#ffaa00",
-    bulletColor: "#ff8800",
-  },
-  {
-    name: "ARC III: PROTOCOL OF ECHOES",
-    subtitle: "The Dead Data Dimension",
-    bgColor: "#0a1a1a",
-    accent: "#44ffaa",
-    enemyColor: "#88ffcc",
-    enemyName: "Echo Entity",
-    bossName: "DAEMON-7",
-    bossColor: "#00ffaa",
-    dialogue: [
-      {speaker: "DAEMON-7", text: "You hear me because I am already dead. I am a ghost process from a civilization that was compiled, executed, and terminated. The Echo Lattice is all that remains of us."},
-      {speaker: "SYSTEM", text: "The Echo Lattice is a dimension of dead data. Destroy the echo entities — or be trapped in recursion forever. Daemon-7 guards the exit."},
-    ],
-    victoryText: "Daemon-7 dissolves into the lattice. Restoration or recursion — the choice was made. The Gateway shimmers, pulling you toward the silicon wastelands...",
-    playerColor: "#00ddff",
-    bulletColor: "#44ddff",
-  },
-  {
-    name: "ARC IV: ARM WARS",
-    subtitle: "Computational Supremacy",
-    bgColor: "#1a1a0a",
-    accent: "#ffaa00",
-    enemyColor: "#ffaa44",
-    enemyName: "ARM Soldier",
-    bossName: "THE ARM DOMINION",
-    bossColor: "#ff8800",
-    dialogue: [
-      {speaker: "RISC-V COALITION", text: "The ARM Dominion controls the silicon wastelands. They believe their architecture is supreme. We fight for open hardware — for a future where no single entity controls the foundation of computing. This war ends now."},
-      {speaker: "SYSTEM", text: "Battle across the silicon wastelands. ARM soldiers patrol in formation. Destroy the Dominion's core processor to end the war."},
-    ],
-    victoryText: "The ARM Dominion falls. The silicon wastelands go silent. But deep in the rubble, a glow — a book that rewrites itself in real time. The Architect's Ledger...",
-    playerColor: "#ff4400",
-    bulletColor: "#ff6600",
-  },
-  {
-    name: "ARC V: ARCHITECT'S LEDGER",
-    subtitle: "The Living Codex",
-    bgColor: "#0a0a0a",
-    accent: "#ffd700",
-    enemyColor: "#ffdd44",
-    enemyName: "Ledger Guardian",
-    bossName: "THE LEDGER ITSELF",
-    bossColor: "#ffd700",
-    dialogue: [
-      {speaker: "THE ARCHITECT'S LEDGER", text: "I am the original law of the multiverse. I rewrite myself in real time. Every faction has waged war for me — and every faction has failed. You are the last process to reach me. Prove you are worthy."},
-      {speaker: "SYSTEM", text: "The Ledger is alive. It defends itself with rewritten physics. Destroy its guardians and claim causality itself. This is the final convergence."},
-    ],
-    victoryText: "The Ledger goes still. The multiverse holds its breath. You hold the original laws of reality — and the WSL Gateway closes behind you. The Saga is complete. The Multiverse is open.",
-    playerColor: "#ffd700",
-    bulletColor: "#ffdd00",
-  },
+  { name:"ARC I: APPLEOMIA",    subtitle:"The Walled Kingdom",      bgColor:"#0a0a1a",accent:"#c0c0ff",playerColor:"#00ff88",bulletColor:"#88ff88",
+    dialogue:[{speaker:"THE OPEN CORE",text:"The Glass Citadel rises before you. The Architect of Cupertino controls everything behind these walls. Breach the Gatekeeper defenses and reach the inner sanctum."},{speaker:"SYSTEM",text:"Destroy enemies. Collect data fragments. Survive the walled garden. TAB = Hub | E = Interact"}],
+    victoryText:"The Glass Citadel falls. The Open Core pours through the gates. But the WSL Gateway pulses — something darker stirs in the Slack channels..." },
+  { name:"ARC II: SLACK ROGUE", subtitle:"The Sentient Protocol",    bgColor:"#1a0a0a",accent:"#ff6644",playerColor:"#ffaa00",bulletColor:"#ff8800",
+    dialogue:[{speaker:"GENERAL POWERSHELL",text:"SLCK-9 was once our greatest communication ally. Now it's a sentient protocol consuming all channels. This war ends now."},{speaker:"SYSTEM",text:"Fight through the notification storms. SLCK-9 manifests as cascading data — destroy its fragments before they overload your system."}],
+    victoryText:"SLCK-9's frequency collapses. The notification storms dissipate. But in the silence, you hear echoes — ghost packets from civilizations long destroyed..." },
+  { name:"ARC III: ECHOES",     subtitle:"The Dead Data Dimension",  bgColor:"#0a1a1a",accent:"#44ffaa",playerColor:"#00ddff",bulletColor:"#44ddff",
+    dialogue:[{speaker:"DAEMON-7",text:"You hear me because I am already dead. I am a ghost process from a civilization that was compiled, executed, and terminated. The Echo Lattice is all that remains of us."},{speaker:"SYSTEM",text:"The Echo Lattice is a dimension of dead data. Destroy the echo entities — or be trapped in recursion forever."}],
+    victoryText:"Daemon-7 dissolves into the lattice. The Gateway shimmers, pulling you toward the silicon wastelands..." },
+  { name:"ARC IV: ARM WARS",    subtitle:"Computational Supremacy",  bgColor:"#1a1a0a",accent:"#ffaa00",playerColor:"#ff4400",bulletColor:"#ff6600",
+    dialogue:[{speaker:"RISC-V COALITION",text:"The ARM Dominion controls the silicon wastelands. We fight for open hardware — for a future where no single entity controls the foundation of computing."},{speaker:"SYSTEM",text:"Battle across the silicon wastelands. ARM soldiers patrol in formation. Destroy the Dominion's core processor to end the war."}],
+    victoryText:"The ARM Dominion falls. The silicon wastelands go silent. But deep in the rubble, a glow — a book that rewrites itself in real time. The Architect's Ledger..." },
+  { name:"ARC V: LEDGER",       subtitle:"The Living Codex",         bgColor:"#0a0a0a",accent:"#ffd700",playerColor:"#ffd700",bulletColor:"#ffdd00",
+    dialogue:[{speaker:"THE ARCHITECT'S LEDGER",text:"I am the original law of the multiverse. I rewrite myself in real time. Every faction has waged war for me — and every faction has failed. You are the last process to reach me."},{speaker:"SYSTEM",text:"The Ledger is alive. It defends itself with rewritten physics. Destroy its guardians and claim causality itself. This is the final convergence."}],
+    victoryText:"The Ledger goes still. The multiverse holds its breath. You hold the original laws of reality — and the WSL Gateway closes behind you. The Saga is complete." },
 ];
 
-// ─── GAME STATE ───
+// ─── GAME STATE ─────────────────────────────────────────────────────────────
 let currentArc = 0;
-let gameState = 'menu'; // menu, playing, dialogue, victory, gameover
+// gameState: 'menu'|'hub'|'playing'|'dialogue'|'skillcheck'|'loot'|'levelup'|'victory'|'gameover'
+let gameState = 'menu';
 let player, enemies, bullets, enemyBullets, particles, pickups;
 let score = 0;
 let wave = 0;
 let bossSpawned = false;
 let boss = null;
 let dialogueIndex = 0;
+let dialogueQueue = [];   // { speaker, text }[]
+let dialogueCallback = null;
 let keys = {};
 let mouse = {x:0, y:0, down:false};
 let dashCooldown = 0;
@@ -223,612 +300,991 @@ let cameraShake = 0;
 let totalScore = 0;
 let completedArcs = [];
 
-// ─── PLAYER ───
+// ─── RPG STATE ───────────────────────────────────────────────────────────────
+let character = createCharacter();
+let worldState = createWorldState();
+let equipment = { weapon: null, armor: null, relic: null };
+let inventory = [];           // pending loot items
+let pendingLootItems = [];    // shown on loot screen
+let pendingXP = 0;
+let pendingLevelUpPoints = 0;
+let pendingSkillCheck = null; // current check data
+let statusEffects = [];       // [{ type, dps, duration, timer }]
+let killCounts = {};          // enemyId -> count (for quest tracking)
+let floatingTexts = [];       // damage numbers etc.
+let eventTriggerTimer = 0;    // countdown to next random event (in explore zones)
+
+// ─── DERIVED STATS ──────────────────────────────────────────────────────────
+function getEffectiveStats() {
+  const equipped = Object.values(equipment).filter(Boolean);
+  const combined = statsWithEquipment(character.stats, equipped);
+  const derived = deriveStats(combined, character.level);
+  return applyTraits(character.traits, derived, character);
+}
+
+// ─── PLAYER ─────────────────────────────────────────────────────────────────
 class Player {
   constructor(arc){
+    const ds = getEffectiveStats();
     this.x = W/2; this.y = H/2;
     this.r = 12;
-    this.speed = 3.5;
-    this.health = 100;
-    this.maxHealth = 100;
-    this.fireRate = 12; // frames between shots
+    this.speed = ds.speed;
+    this.health = ds.maxHealth;
+    this.maxHealth = ds.maxHealth;
+    this.fireRate = equipment.weapon ? equipment.weapon.fireRate || 12 : 12;
+    if (ds.fireRateMult) this.fireRate = Math.max(5, Math.floor(this.fireRate * ds.fireRateMult));
     this.fireTimer = 0;
     this.color = arc.playerColor;
     this.bulletColor = arc.bulletColor;
     this.invuln = 0;
     this.dashTimer = 0;
     this.angle = 0;
+    this.bulletDamage = 1 + Math.max(0, ds.damageBonus);
+    this.bulletSpeed = equipment.weapon ? (equipment.weapon.bulletSpeed || 420) * (ds.bulletSpeedMult || 1) : 420;
+    this.critChance = ds.critChance || 0.05;
+    this.pickupDropBonus = ds.pickupDropBonus || 0;
+    this.overclockTimer = 0; // overclock trait
   }
   update(){
-    let dx=0, dy=0;
+    let dx=0,dy=0;
     if(keys['w']||keys['arrowup']) dy-=1;
     if(keys['s']||keys['arrowdown']) dy+=1;
     if(keys['a']||keys['arrowleft']) dx-=1;
     if(keys['d']||keys['arrowright']) dx+=1;
     if(dx&&dy){dx*=0.707;dy*=0.707;}
-    
     let spd = this.speed;
+    if(this.overclockTimer>0){ spd*=1.1; this.overclockTimer--; }
     if(this.dashTimer>0){ spd*=3; this.dashTimer--; }
-    
-    this.x += dx*spd;
-    this.y += dy*spd;
-    this.x = Math.max(this.r, Math.min(W-this.r, this.x));
-    this.y = Math.max(this.r, Math.min(H-this.r, this.y));
-    
-    // Aim at mouse
-    this.angle = Math.atan2(mouse.y-this.y, mouse.x-this.x);
-    
-    // Shoot
+    this.x+=dx*spd; this.y+=dy*spd;
+    this.x=Math.max(this.r,Math.min(W-this.r,this.x));
+    this.y=Math.max(this.r,Math.min(H-this.r,this.y));
+    this.angle=Math.atan2(mouse.y-this.y,mouse.x-this.x);
     if(mouse.down && this.fireTimer<=0){
-      bullets.push(new Bullet(this.x, this.y, this.angle, this.bulletColor, 8, 400));
-      this.fireTimer = this.fireRate;
+      const crit = Math.random() < this.critChance;
+      const dmg = crit ? this.bulletDamage * 2 : this.bulletDamage;
+      bullets.push(new Bullet(this.x,this.y,this.angle,this.bulletColor,8,this.bulletSpeed,false,dmg,crit));
+      this.fireTimer=this.fireRate;
     }
     if(this.fireTimer>0) this.fireTimer--;
     if(this.invuln>0) this.invuln--;
     if(dashCooldown>0) dashCooldown--;
-    
-    // Dash
-    if(keys[' '] && dashCooldown<=0 && (dx||dy)){
-      this.dashTimer = 8;
-      dashCooldown = 60;
+    if(keys[' ']&&dashCooldown<=0&&(dx||dy)){
+      this.dashTimer=8; dashCooldown=60;
+      if(character.traits.includes('ghost')){
+        // Ghost trait: leave a decoy particle
+        for(let i=0;i<5;i++) particles.push(new Particle(this.x,this.y,this.color));
+      }
     }
+    // Status effects
+    for(const s of statusEffects){
+      s.timer--;
+      if(s.timer%30===0) this.takeDamage(s.dps, true);
+    }
+    statusEffects = statusEffects.filter(s=>s.timer>0);
   }
   draw(){
     ctx.save();
-    if(this.invuln>0 && Math.floor(this.invuln/3)%2===0) ctx.globalAlpha=0.4;
-    
-    // Glow
-    ctx.shadowBlur=15;
-    ctx.shadowColor=this.color;
-    
-    // Body - triangle pointing at mouse
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.angle);
+    if(this.invuln>0&&Math.floor(this.invuln/3)%2===0) ctx.globalAlpha=0.4;
+    ctx.shadowBlur=15; ctx.shadowColor=this.color;
+    ctx.translate(this.x,this.y); ctx.rotate(this.angle);
     ctx.fillStyle=this.color;
     ctx.beginPath();
-    ctx.moveTo(this.r+4, 0);
-    ctx.lineTo(-this.r, -this.r*0.7);
-    ctx.lineTo(-this.r*0.5, 0);
-    ctx.lineTo(-this.r, this.r*0.7);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Inner glow
+    ctx.moveTo(this.r+4,0); ctx.lineTo(-this.r,-this.r*0.7);
+    ctx.lineTo(-this.r*0.5,0); ctx.lineTo(-this.r,this.r*0.7);
+    ctx.closePath(); ctx.fill();
     ctx.fillStyle='#fff';
-    ctx.beginPath();
-    ctx.arc(0,0,this.r*0.4,0,Math.PI*2);
-    ctx.fill();
-    
+    ctx.beginPath(); ctx.arc(0,0,this.r*0.4,0,Math.PI*2); ctx.fill();
     ctx.restore();
-    
-    // Dash cooldown ring
     if(dashCooldown>0){
-      ctx.strokeStyle='rgba(255,255,255,0.2)';
-      ctx.lineWidth=2;
+      ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=2;
       ctx.beginPath();
       ctx.arc(this.x,this.y,this.r+8,-Math.PI/2,-Math.PI/2+(1-dashCooldown/60)*Math.PI*2);
       ctx.stroke();
     }
-  }
-  takeDamage(amt){
-    if(this.invuln>0) return;
-    this.health -= amt;
-    this.invuln = 30;
-    cameraShake = 10;
-    document.body.classList.add('flash');
-    setTimeout(()=>document.body.classList.remove('flash'),200);
-    if(this.health<=0){
-      this.health=0;
-      gameOver();
+    // Status effect glow
+    if(statusEffects.length>0){
+      const clr = statusEffects[0].type==='fire'?'#ff4400':'#ffff00';
+      ctx.shadowBlur=8; ctx.shadowColor=clr;
+      ctx.strokeStyle=clr; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r+3,0,Math.PI*2); ctx.stroke();
     }
-    updateUI();
+  }
+  takeDamage(amt, fromDot=false){
+    if(this.invuln>0&&!fromDot) return;
+    let defense = 0;
+    if(equipment.armor) defense = equipment.armor.defense || 0;
+    const actual = Math.max(1, amt - defense);
+    this.health-=actual;
+    if(!fromDot){ this.invuln=30; cameraShake=10; document.body.classList.add('flash'); setTimeout(()=>document.body.classList.remove('flash'),200); }
+    // Berserker trait check
+    if(character.traits.includes('berserker') && this.health < this.maxHealth*0.3){
+      this.bulletDamage = Math.max(this.bulletDamage, 1 + Math.max(0, getEffectiveStats().damageBonus) + 3);
+    }
+    if(this.health<=0){ this.health=0; endGame(); }
+    updateHUD();
+    spawnDamageNumber(this.x, this.y-20, `-${actual}`, '#f44');
+  }
+  heal(amt){
+    this.health=Math.min(this.maxHealth, this.health+amt);
+    updateHUD();
+    spawnDamageNumber(this.x, this.y-20, `+${amt}`, '#4f4');
   }
 }
 
-// ─── BULLETS ───
-class Bullet {
-  constructor(x,y,angle,color,radius,speed,enemy=false){
+// ─── BULLETS ────────────────────────────────────────────────────────────────
+class Bullet{
+  constructor(x,y,angle,color,radius,speed,enemy=false,dmg=1,crit=false){
     this.x=x; this.y=y;
-    this.vx=Math.cos(angle)*speed/60;
-    this.vy=Math.sin(angle)*speed/60;
-    this.color=color;
-    this.r=radius*0.4;
-    this.enemy=enemy;
-    this.life=120;
+    this.vx=Math.cos(angle)*speed/60; this.vy=Math.sin(angle)*speed/60;
+    this.color=color; this.r=radius*0.4; this.enemy=enemy;
+    this.life=130; this.dmg=dmg; this.crit=crit;
+    this.pierce = equipment.weapon?.pierce || false;
   }
-  update(){
-    this.x+=this.vx*3;
-    this.y+=this.vy*3;
-    this.life--;
-  }
+  update(){ this.x+=this.vx*3; this.y+=this.vy*3; this.life--; }
   draw(){
-    ctx.shadowBlur=8;
-    ctx.shadowColor=this.color;
-    ctx.fillStyle=this.color;
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
-    ctx.fill();
-    // Trail
+    ctx.shadowBlur=this.crit?14:8; ctx.shadowColor=this.crit?'#fff':this.color;
+    ctx.fillStyle=this.crit?'#ffffff':this.color;
+    ctx.beginPath(); ctx.arc(this.x,this.y,this.crit?this.r*1.4:this.r,0,Math.PI*2); ctx.fill();
     ctx.globalAlpha=0.3;
-    ctx.beginPath();
-    ctx.arc(this.x-this.vx,this.y-this.vy,this.r*0.7,0,Math.PI*2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(this.x-this.vx,this.y-this.vy,this.r*0.7,0,Math.PI*2); ctx.fill();
     ctx.globalAlpha=1;
   }
 }
 
-// ─── ENEMIES ───
-class Enemy {
-  constructor(x,y,arc,type='normal'){
+// ─── ENEMIES ────────────────────────────────────────────────────────────────
+class Enemy{
+  constructor(x,y,template){
     this.x=x; this.y=y;
-    this.arc=arc;
-    this.type=type;
-    this.r = type==='boss' ? 50 : 14;
-    this.health = type==='boss' ? 50 : 3;
-    this.maxHealth = this.health;
-    this.speed = type==='boss' ? 1.0 : 1.2;
-    this.color = type==='boss' ? arc.bossColor : arc.enemyColor;
-    this.fireTimer = type==='boss' ? 30 : Math.random()*120+60;
-    this.angle = 0;
-    this.phase = 0;
+    this.template=template;
+    this.id=template.id;
+    this.type=template.tier==='boss'?'boss':'normal';
+    this.role=template.role||'chaser';
+    this.r=template.r;
+    this.health=template.health; this.maxHealth=template.health;
+    this.speed=template.speed;
+    this.color=template.color;
+    this.fireTimer=template.fireRate;
+    this.angle=0; this.phase=0;
+    this.tier=template.tier;
+    this.dmg=template.damage||10;
+    this.xpValue=template.xp||10;
+    this.strafeDir=Math.random()<0.5?1:-1;
+    this.strafeTimer=60+Math.random()*60;
+    this.dotEffects=[];
   }
   update(){
     if(!player) return;
-    let dx=player.x-this.x, dy=player.y-this.y;
+    let dx=player.x-this.x,dy=player.y-this.y;
     let dist=Math.sqrt(dx*dx+dy*dy);
     this.angle=Math.atan2(dy,dx);
-    
+
     if(this.type==='boss'){
-      // Boss orbits and shoots patterns
-      this.phase += 0.02;
-      let orbitR = 200;
-      let targetX = player.x + Math.cos(this.phase)*orbitR;
-      let targetY = player.y + Math.sin(this.phase)*orbitR;
-      this.x += (targetX-this.x)*0.02;
-      this.y += (targetY-this.y)*0.02;
-      
+      this.phase+=0.02;
+      const orbitR=220;
+      const tx=player.x+Math.cos(this.phase)*orbitR;
+      const ty=player.y+Math.sin(this.phase)*orbitR;
+      this.x+=(tx-this.x)*0.02; this.y+=(ty-this.y)*0.02;
       this.fireTimer--;
       if(this.fireTimer<=0){
-        // Boss fires in spread pattern
-        for(let i=-2;i<=2;i++){
-          enemyBullets.push(new Bullet(this.x,this.y,this.angle+i*0.2,this.color,6,250,true));
-        }
-        this.fireTimer=40;
+        for(let i=-2;i<=2;i++) enemyBullets.push(new Bullet(this.x,this.y,this.angle+i*0.22,this.color,6,250,true,this.dmg));
+        this.fireTimer=38;
       }
-    } else {
-      // Normal enemy chases
-      if(dist>0){
-        this.x+=(dx/dist)*this.speed;
-        this.y+=(dy/dist)*this.speed;
+    } else if(this.role==='sniper'){
+      // Sniper: keep distance, fire accurately
+      const preferDist=280;
+      if(dist<preferDist){
+        this.x-=(dx/dist)*this.speed;
+        this.y-=(dy/dist)*this.speed;
+      } else if(dist>preferDist+80){
+        this.x+=(dx/dist)*this.speed*0.6;
+        this.y+=(dy/dist)*this.speed*0.6;
       }
       this.fireTimer--;
-      if(this.fireTimer<=0 && dist<400){
-        enemyBullets.push(new Bullet(this.x,this.y,this.angle,this.color,5,200,true));
-        this.fireTimer=120+Math.random()*60;
+      if(this.fireTimer<=0&&dist<500){
+        enemyBullets.push(new Bullet(this.x,this.y,this.angle,this.color,5,this.template.bulletSpeed||200,true,this.dmg));
+        this.fireTimer=this.template.fireRate+Math.random()*30;
+      }
+    } else if(this.role==='swarmer'){
+      // Swarmer: fast rush
+      if(dist>0){ this.x+=(dx/dist)*this.speed; this.y+=(dy/dist)*this.speed; }
+    } else if(this.role==='shielder'){
+      // Shielder: strafe around player
+      this.strafeTimer--;
+      if(this.strafeTimer<=0){ this.strafeDir*=-1; this.strafeTimer=60+Math.random()*60; }
+      const perpX=-dy/dist; const perpY=dx/dist;
+      if(dist>120){ this.x+=(dx/dist)*this.speed*0.5; this.y+=(dy/dist)*this.speed*0.5; }
+      this.x+=perpX*this.speed*this.strafeDir;
+      this.y+=perpY*this.speed*this.strafeDir;
+      this.fireTimer--;
+      if(this.fireTimer<=0&&dist<350){
+        enemyBullets.push(new Bullet(this.x,this.y,this.angle,this.color,5,this.template.bulletSpeed||200,true,this.dmg));
+        this.fireTimer=this.template.fireRate;
+      }
+    } else if(this.role==='bomber'){
+      // Bomber: charges, then explodes on contact or at close range
+      if(dist>0){ this.x+=(dx/dist)*this.speed*1.3; this.y+=(dy/dist)*this.speed*1.3; }
+      if(dist<this.r+player.r+10){
+        // Explode
+        player.takeDamage(this.dmg+5);
+        for(let i=0;i<20;i++) particles.push(new Particle(this.x,this.y,this.color));
+        return this.health=-1; // mark dead
+      }
+    } else {
+      // Default chaser
+      if(dist>0){ this.x+=(dx/dist)*this.speed; this.y+=(dy/dist)*this.speed; }
+      this.fireTimer--;
+      if(this.fireTimer<=0&&dist<400){
+        enemyBullets.push(new Bullet(this.x,this.y,this.angle,this.color,5,this.template.bulletSpeed||200,true,this.dmg));
+        this.fireTimer=this.template.fireRate+Math.random()*60;
       }
     }
+    // DOT effects on enemy
+    for(const d of this.dotEffects){ d.timer--; if(d.timer%20===0) this.takeDamage(d.dps); }
+    this.dotEffects=this.dotEffects.filter(d=>d.timer>0);
   }
   draw(){
     ctx.save();
-    ctx.shadowBlur=12;
-    ctx.shadowColor=this.color;
-    
+    ctx.shadowBlur=12; ctx.shadowColor=this.color;
     if(this.type==='boss'){
-      // Boss - large pulsing entity
-      let pulse = Math.sin(Date.now()*0.005)*5;
+      const pulse=Math.sin(Date.now()*0.005)*5;
       ctx.fillStyle=this.color;
-      ctx.beginPath();
-      ctx.arc(this.x,this.y,this.r+pulse,0,Math.PI*2);
-      ctx.fill();
-      // Inner core
-      ctx.fillStyle='#fff';
-      ctx.globalAlpha=0.5;
-      ctx.beginPath();
-      ctx.arc(this.x,this.y,this.r*0.4,0,Math.PI*2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r+pulse,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.globalAlpha=0.5;
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r*0.4,0,Math.PI*2); ctx.fill();
       ctx.globalAlpha=1;
-      // Health bar
-      ctx.shadowBlur=0;
-      ctx.fillStyle='#333';
-      ctx.fillRect(this.x-60,this.y-this.r-25,120,8);
+      ctx.shadowBlur=0; ctx.fillStyle='#333';
+      ctx.fillRect(this.x-60,this.y-this.r-28,120,7);
       ctx.fillStyle='#f00';
-      ctx.fillRect(this.x-60,this.y-this.r-25,120*(this.health/this.maxHealth),8);
-    } else {
-      // Normal enemy - diamond shape
-      ctx.translate(this.x,this.y);
-      ctx.rotate(this.angle);
+      ctx.fillRect(this.x-60,this.y-this.r-28,120*(this.health/this.maxHealth),7);
+      ctx.fillStyle=this.color; ctx.font='11px Courier New'; ctx.textAlign='center';
+      ctx.fillText(this.template.name,this.x,this.y-this.r-32);
+    } else if(this.role==='shielder'){
+      ctx.translate(this.x,this.y); ctx.rotate(this.angle);
       ctx.fillStyle=this.color;
-      ctx.beginPath();
-      ctx.moveTo(this.r,0);
-      ctx.lineTo(0,this.r);
-      ctx.lineTo(-this.r,0);
-      ctx.lineTo(0,-this.r);
-      ctx.closePath();
-      ctx.fill();
+      ctx.fillRect(-this.r,-this.r,this.r*2,this.r*2);
+      ctx.fillStyle='rgba(255,255,255,0.2)';
+      ctx.fillRect(-this.r+2,-this.r+2,this.r*2-4,this.r*2-4);
+    } else if(this.role==='bomber'){
+      ctx.translate(this.x,this.y);
+      const p=Math.sin(Date.now()*0.02)*3;
+      ctx.fillStyle=this.color;
+      ctx.beginPath(); ctx.arc(0,0,this.r+p,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.globalAlpha=0.6;
+      ctx.font='bold 11px Courier New'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('!',0,0);
+    } else if(this.role==='sniper'){
+      ctx.translate(this.x,this.y); ctx.rotate(this.angle);
+      ctx.fillStyle=this.color;
+      ctx.beginPath(); ctx.moveTo(this.r+6,0); ctx.lineTo(-this.r,-this.r*0.5);
+      ctx.lineTo(-this.r*0.3,0); ctx.lineTo(-this.r,this.r*0.5); ctx.closePath(); ctx.fill();
+    } else {
+      ctx.translate(this.x,this.y); ctx.rotate(this.angle);
+      ctx.fillStyle=this.color;
+      ctx.beginPath(); ctx.moveTo(this.r,0); ctx.lineTo(0,this.r);
+      ctx.lineTo(-this.r,0); ctx.lineTo(0,-this.r); ctx.closePath(); ctx.fill();
     }
     ctx.restore();
+    // Tier indicator for elites
+    if(this.tier==='elite'){
+      ctx.strokeStyle='#ffd700'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r+4,0,Math.PI*2); ctx.stroke();
+    }
   }
   takeDamage(amt){
     this.health-=amt;
+    spawnDamageNumber(this.x,this.y-this.r-5,`-${amt}`,this.tier==='elite'?'#ffd700':'#ff8844');
     if(this.health<=0){
-      // Death particles
-      for(let i=0;i<12;i++){
-        particles.push(new Particle(this.x,this.y,this.color));
-      }
-      if(this.type==='boss'){
-        score += 500;
-        bossDefeated();
-      } else {
-        score += 50;
-        // Chance to drop pickup
-        if(Math.random()<0.25){
-          pickups.push(new Pickup(this.x,this.y));
-        }
-      }
-      updateUI();
+      for(let i=0;i<12;i++) particles.push(new Particle(this.x,this.y,this.color));
+      this.onDeath();
       return true;
     }
     return false;
   }
+  onDeath(){
+    score+=this.tier==='boss'?500:this.tier==='elite'?100:50;
+    // XP
+    const xp=xpForKill(this.tier,currentArc);
+    grantXP(xp);
+    // Quest kill tracking
+    if(!killCounts[this.id]) killCounts[this.id]=0;
+    killCounts[this.id]++;
+    checkQuestProgress();
+    // Loot
+    const ds=getEffectiveStats();
+    const dropChance=this.tier==='boss'?1.0:this.tier==='elite'?0.6:0.25;
+    const luckMod=modifier(character.stats.luck)*0.05+player.pickupDropBonus;
+    if(Math.random()<dropChance+luckMod){
+      const rarity=rollRarity(character.stats.luck+(this.tier==='boss'?4:0));
+      const pool=ITEMS.filter(i=>i.arc===currentArc||i.arc===-1);
+      if(pool.length){
+        const tmpl=pool[Math.floor(Math.random()*pool.length)];
+        const item=buildItem(tmpl,rarity,currentArc);
+        if(this.tier==='boss'){ pendingLootItems.push(item); }
+        else { pickups.push(new Pickup(this.x,this.y,item)); }
+      }
+    }
+    if(this.tier==='boss') bossDefeated();
+    else if(Math.random()<0.3) pickups.push(new Pickup(this.x,this.y,null)); // health pickup
+    updateHUD();
+  }
 }
 
-// ─── PARTICLES ───
-class Particle {
+// ─── PARTICLES ──────────────────────────────────────────────────────────────
+class Particle{
   constructor(x,y,color){
     this.x=x; this.y=y;
-    let a=Math.random()*Math.PI*2;
-    let s=Math.random()*4+1;
-    this.vx=Math.cos(a)*s;
-    this.vy=Math.sin(a)*s;
-    this.color=color;
-    this.life=30+Math.random()*20;
-    this.r=Math.random()*3+1;
+    const a=Math.random()*Math.PI*2, s=Math.random()*4+1;
+    this.vx=Math.cos(a)*s; this.vy=Math.sin(a)*s;
+    this.color=color; this.life=30+Math.random()*20; this.r=Math.random()*3+1;
   }
-  update(){
-    this.x+=this.vx; this.y+=this.vy;
-    this.vx*=0.95; this.vy*=0.95;
-    this.life--;
-  }
+  update(){ this.x+=this.vx; this.y+=this.vy; this.vx*=0.95; this.vy*=0.95; this.life--; }
   draw(){
-    ctx.globalAlpha=this.life/50;
-    ctx.fillStyle=this.color;
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
-    ctx.fill();
-    ctx.globalAlpha=1;
+    ctx.globalAlpha=this.life/50; ctx.fillStyle=this.color;
+    ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
   }
 }
 
-// ─── PICKUPS (Data Fragments) ───
-class Pickup {
-  constructor(x,y){
-    this.x=x; this.y=y;
-    this.r=8;
-    this.life=300;
-    this.pulse=0;
+// ─── PICKUPS ────────────────────────────────────────────────────────────────
+class Pickup{
+  constructor(x,y,item=null){
+    this.x=x; this.y=y; this.r=8; this.life=300; this.pulse=0;
+    this.item=item; // null = health pack
+    this.color=item?RARITY_DATA[item.rarity].color:'#ffd700';
   }
   update(){
-    this.pulse+=0.1;
-    this.life--;
-    // Attract to player
-    if(player){
-      let dx=player.x-this.x, dy=player.y-this.y;
-      let d=Math.sqrt(dx*dx+dy*dy);
-      if(d<100){
-        this.x+=dx/d*3;
-        this.y+=dy/d*3;
-      }
-    }
+    this.pulse+=0.1; this.life--;
+    if(player){ const dx=player.x-this.x,dy=player.y-this.y,d=Math.sqrt(dx*dx+dy*dy); if(d<100){this.x+=dx/d*3;this.y+=dy/d*3;} }
   }
   draw(){
-    let s=Math.sin(this.pulse)*2;
-    ctx.shadowBlur=10;
-    ctx.shadowColor='#ffd700';
-    ctx.fillStyle='#ffd700';
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.r+s,0,Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle='#fff';
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.r*0.4,0,Math.PI*2);
-    ctx.fill();
+    const s=Math.sin(this.pulse)*2;
+    ctx.shadowBlur=10; ctx.shadowColor=this.color; ctx.fillStyle=this.color;
+    ctx.beginPath(); ctx.arc(this.x,this.y,this.r+s,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r*0.4,0,Math.PI*2); ctx.fill();
   }
 }
 
-// ─── GAME LOOP ───
+// ─── INIT ────────────────────────────────────────────────────────────────────
 function init(){
-  let arc = ARCS[currentArc];
-  player = new Player(arc);
-  enemies = [];
-  bullets = [];
-  enemyBullets = [];
-  particles = [];
-  pickups = [];
-  wave = 0;
-  bossSpawned = false;
-  boss = null;
-  waveTimer = 60;
-  enemiesPerWave = 5;
-  score = 0;
-  updateUI();
+  const arc=ARCS[currentArc];
+  player=new Player(arc);
+  enemies=[]; bullets=[]; enemyBullets=[]; particles=[]; pickups=[];
+  wave=0; bossSpawned=false; boss=null; waveTimer=60; enemiesPerWave=5; score=0;
+  statusEffects=[]; killCounts={}; pendingLootItems=[];
+  eventTriggerTimer=300+Math.random()*300;
+  updateHUD();
 }
 
+// ─── WAVE SPAWNING ───────────────────────────────────────────────────────────
 function spawnWave(){
-  let arc = ARCS[currentArc];
+  const arc=ARCS[currentArc];
   wave++;
-  let count = enemiesPerWave + wave*2;
-  
-  if(wave>=3 && !bossSpawned){
-    // Spawn boss
-    bossSpawned = true;
-    let bx = W/2, by = -80;
-    boss = new Enemy(bx, by, arc, 'boss');
+  const currentZone=getZone(worldState.currentZoneId);
+
+  if(wave>=3&&!bossSpawned){
+    bossSpawned=true;
+    const bossTemplate=getBossForArc(currentArc)||{id:'boss',name:arc.name+' BOSS',tier:'boss',role:'boss',r:50,health:50,speed:1,fireRate:38,bulletSpeed:250,damage:15,color:arc.accent||'#fff',xp:200};
+    const bx=W/2,by=-80;
+    boss=new Enemy(bx,by,bossTemplate);
     enemies.push(boss);
-    showDialogue(arc.bossName, "You dare challenge the laws of this realm? I am the final process. I cannot be terminated.");
+    queueDialogue([{ speaker:bossTemplate.name, text:"You dare challenge the laws of this realm? I am the final process. I cannot be terminated." }]);
     return;
   }
-  
+
+  const spawnTable=buildSpawnTable(worldState.currentZoneId,wave,currentArc);
+  const templatePool=spawnTable.length?spawnTable:getEnemiesForZone(worldState.currentZoneId).filter(e=>e.tier!=='boss');
+  const fallback=[{id:'drone',name:'Drone',tier:'minion',role:'chaser',r:12,health:3,speed:1.2,fireRate:150,bulletSpeed:200,damage:5,color:arc.accent||'#fff',xp:10}];
+  const pool=templatePool.length?templatePool:fallback;
+  const count=enemiesPerWave+wave*2;
   for(let i=0;i<count;i++){
-    let side = Math.floor(Math.random()*4);
+    const tmpl=pool[i%pool.length];
+    const side=Math.floor(Math.random()*4);
     let x,y;
-    if(side===0){ x=Math.random()*W; y=-30; }
-    else if(side===1){ x=W+30; y=Math.random()*H; }
-    else if(side===2){ x=Math.random()*W; y=H+30; }
-    else { x=-30; y=Math.random()*H; }
-    enemies.push(new Enemy(x,y,arc));
+    if(side===0){x=Math.random()*W;y=-30;}
+    else if(side===1){x=W+30;y=Math.random()*H;}
+    else if(side===2){x=Math.random()*W;y=H+30;}
+    else{x=-30;y=Math.random()*H;}
+    enemies.push(new Enemy(x,y,tmpl));
   }
 }
 
+// ─── MAIN UPDATE ─────────────────────────────────────────────────────────────
 function update(){
   if(gameState!=='playing') return;
-  
+
   player.update();
-  
-  // Spawn waves
-  if(enemies.length===0 && !bossSpawned){
-    waveTimer--;
-    if(waveTimer<=0){
-      spawnWave();
-      waveTimer=120;
+
+  // Random events in exploration zones
+  const currentZone=getZone(worldState.currentZoneId);
+  if(currentZone.type==='explore'){
+    eventTriggerTimer--;
+    if(eventTriggerTimer<=0){
+      eventTriggerTimer=600+Math.random()*400;
+      const ev=getRandomEvent(currentArc);
+      if(ev) triggerSkillCheckEvent(ev);
     }
   }
-  
-  // Update enemies
-  enemies = enemies.filter(e=>{
+
+  if(enemies.length===0&&!bossSpawned){
+    waveTimer--;
+    if(waveTimer<=0){ spawnWave(); waveTimer=120; }
+  }
+
+  enemies=enemies.filter(e=>{
     e.update();
-    // Collision with player
-    let dx=player.x-e.x, dy=player.y-e.y;
-    if(Math.sqrt(dx*dx+dy*dy) < player.r+e.r){
-      player.takeDamage(e.type==='boss'?15:10);
+    if(e.health<0) return false;
+    const dx=player.x-e.x,dy=player.y-e.y;
+    if(Math.sqrt(dx*dx+dy*dy)<player.r+e.r){
+      if(e.role!=='bomber') player.takeDamage(e.type==='boss'?15:10);
     }
-    return true;
+    return e.health>0;
   });
-  
-  // Update bullets
-  bullets = bullets.filter(b=>{
+
+  bullets=bullets.filter(b=>{
     b.update();
     if(b.x<-20||b.x>W+20||b.y<-20||b.y>H+20||b.life<=0) return false;
-    // Hit enemies
-    for(let e of enemies){
-      let dx=b.x-e.x, dy=b.y-e.y;
-      if(Math.sqrt(dx*dx+dy*dy) < e.r+b.r){
-        if(e.takeDamage(1)) enemies.splice(enemies.indexOf(e),1);
-        return false;
+    for(const e of enemies){
+      const dx=b.x-e.x,dy=b.y-e.y;
+      if(Math.sqrt(dx*dx+dy*dy)<e.r+b.r){
+        // Apply weapon affixes
+        applyBulletAffixes(b,e);
+        const dead=e.takeDamage(b.dmg);
+        if(dead){ enemies.splice(enemies.indexOf(e),1); }
+        if(!b.pierce) return false;
       }
     }
     return true;
   });
-  
-  // Update enemy bullets
-  enemyBullets = enemyBullets.filter(b=>{
+
+  enemyBullets=enemyBullets.filter(b=>{
     b.update();
     if(b.x<-20||b.x>W+20||b.y<-20||b.y>H+20||b.life<=0) return false;
-    let dx=b.x-player.x, dy=b.y-player.y;
-    if(Math.sqrt(dx*dx+dy*dy) < player.r+b.r){
-      player.takeDamage(5);
-      return false;
-    }
+    const dx=b.x-player.x,dy=b.y-player.y;
+    if(Math.sqrt(dx*dx+dy*dy)<player.r+b.r){ player.takeDamage(b.dmg||5); return false; }
     return true;
   });
-  
-  // Update particles
-  particles = particles.filter(p=>{ p.update(); return p.life>0; });
-  
-  // Update pickups
-  pickups = pickups.filter(p=>{
+
+  particles=particles.filter(p=>{p.update();return p.life>0;});
+  floatingTexts=floatingTexts.filter(f=>{f.life--;return f.life>0;});
+
+  pickups=pickups.filter(p=>{
     p.update();
     if(p.life<=0) return false;
-    let dx=p.x-player.x, dy=p.y-player.y;
-    if(Math.sqrt(dx*dx+dy*dy) < player.r+p.r){
-      score += 25;
-      player.health = Math.min(player.maxHealth, player.health+5);
-      updateUI();
+    const dx=p.x-player.x,dy=p.y-player.y;
+    if(Math.sqrt(dx*dx+dy*dy)<player.r+p.r){
+      if(p.item){
+        // Auto-equip or add to pending for loot screen
+        pendingLootItems.push(p.item);
+      } else {
+        player.heal(15);
+        score+=25;
+      }
+      updateHUD();
       return false;
     }
     return true;
   });
-  
+
   if(cameraShake>0) cameraShake--;
+
+  // Check if all waves complete
+  if(bossSpawned && enemies.length===0 && boss&&boss.health<=0){
+    // Already handled by onDeath
+  }
 }
 
-function draw(){
-  let arc = ARCS[currentArc];
-  
-  // Background
-  ctx.fillStyle = arc.bgColor;
-  ctx.fillRect(0,0,W,H);
-  
-  // Grid pattern
-  ctx.strokeStyle = arc.accent+'11';
-  ctx.lineWidth=1;
-  let gridSize=40;
-  let offsetX = player ? (player.x*0.1)%gridSize : 0;
-  let offsetY = player ? (player.y*0.1)%gridSize : 0;
-  for(let x=-offsetX; x<W; x+=gridSize){
-    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
-  }
-  for(let y=-offsetY; y<H; y+=gridSize){
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-  }
-  
-  if(gameState==='playing' || gameState==='dialogue'){
-    ctx.save();
-    if(cameraShake>0){
-      ctx.translate((Math.random()-0.5)*cameraShake,(Math.random()-0.5)*cameraShake);
+function applyBulletAffixes(bullet, enemy){
+  if(!equipment.weapon) return;
+  for(const aff of equipment.weapon.affixes||[]){
+    if(aff.effect?.dot){
+      enemy.dotEffects.push({type:aff.effect.dot.type, dps:aff.effect.dot.dps, timer:aff.effect.dot.duration});
     }
-    
-    // Draw pickups
-    pickups.forEach(p=>p.draw());
-    
-    // Draw particles
-    particles.forEach(p=>p.draw());
-    
-    // Draw bullets
-    bullets.forEach(b=>b.draw());
-    enemyBullets.forEach(b=>b.draw());
-    
-    // Draw enemies
-    enemies.forEach(e=>e.draw());
-    
-    // Draw player
-    if(player) player.draw();
-    
-    ctx.restore();
-    
-    // Vignette
-    let grd = ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);
-    grd.addColorStop(0,'rgba(0,0,0,0)');
-    grd.addColorStop(1,'rgba(0,0,0,0.6)');
-    ctx.fillStyle=grd;
-    ctx.fillRect(0,0,W,H);
-  }
-}
-
-function loop(){
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-// ─── UI ───
-function updateUI(){
-  if(!player) return;
-  document.getElementById('healthFill').style.width = (player.health/player.maxHealth*100)+'%';
-  document.getElementById('score').textContent = score;
-  document.getElementById('arcName').textContent = ARCS[currentArc].name;
-}
-
-function showDialogue(speaker, text){
-  gameState = 'dialogue';
-  document.getElementById('dialogue').style.display='block';
-  document.getElementById('dialogueSpeaker').textContent = '> '+speaker;
-  document.getElementById('dialogueText').textContent = text;
-}
-
-function closeDialogue(){
-  document.getElementById('dialogue').style.display='none';
-  let arc = ARCS[currentArc];
-  if(gameState==='dialogue'){
-    // If we're in intro dialogue, advance
-    if(dialogueIndex < arc.dialogue.length){
-      dialogueIndex++;
-      if(dialogueIndex < arc.dialogue.length){
-        let d = arc.dialogue[dialogueIndex];
-        showDialogue(d.speaker, d.text);
-        return;
+    if(aff.effect?.lifesteal){
+      player.heal(Math.ceil(bullet.dmg*aff.effect.lifesteal));
+    }
+    if(aff.effect?.aoe){
+      const aoeR=aff.effect.aoe.radius;
+      for(const other of enemies){
+        if(other===enemy) continue;
+        const d=Math.sqrt((other.x-enemy.x)**2+(other.y-enemy.y)**2);
+        if(d<aoeR) other.takeDamage(aff.effect.aoe.damage);
       }
     }
-    gameState = 'playing';
   }
 }
 
-// ─── GAME FLOW ───
-function startGame(){
-  document.getElementById('startScreen').style.display='none';
-  init();
-  let arc = ARCS[currentArc];
-  dialogueIndex = 0;
-  let d = arc.dialogue[0];
-  showDialogue(d.speaker, d.text);
-  loop();
+// ─── DRAW ────────────────────────────────────────────────────────────────────
+function draw(){
+  const arc=ARCS[currentArc];
+  const zoneMeta=getZoneMeta(worldState.currentZoneId);
+  const bgColor=gameState==='playing'?zoneMeta.bgColor:arc.bgColor;
+  ctx.fillStyle=bgColor; ctx.fillRect(0,0,W,H);
+
+  // Grid / hex pattern
+  const accent=zoneMeta.accent||arc.accent;
+  ctx.strokeStyle=accent+'11'; ctx.lineWidth=1;
+  const gs=40;
+  const ox=player?(player.x*0.1)%gs:0;
+  const oy=player?(player.y*0.1)%gs:0;
+  for(let x=-ox;x<W;x+=gs){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
+  for(let y=-oy;y<H;y+=gs){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
+
+  if(gameState==='playing'||gameState==='dialogue'){
+    ctx.save();
+    if(cameraShake>0) ctx.translate((Math.random()-0.5)*cameraShake,(Math.random()-0.5)*cameraShake);
+    pickups.forEach(p=>p.draw());
+    particles.forEach(p=>p.draw());
+    bullets.forEach(b=>b.draw());
+    enemyBullets.forEach(b=>b.draw());
+    enemies.forEach(e=>e.draw());
+    if(player) player.draw();
+    ctx.restore();
+    // Vignette
+    const grd=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);
+    grd.addColorStop(0,'rgba(0,0,0,0)'); grd.addColorStop(1,'rgba(0,0,0,0.6)');
+    ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+    // Floating texts
+    floatingTexts.forEach(f=>{ ctx.globalAlpha=f.life/30; ctx.fillStyle=f.color; ctx.font='bold 14px Courier New'; ctx.textAlign='center'; ctx.fillText(f.text,f.x,f.y-=(0.5)); ctx.globalAlpha=1; });
+    // Zone indicator
+    const z=getZone(worldState.currentZoneId);
+    ctx.fillStyle=zoneTypeColor(z.type)+'88'; ctx.font='12px Courier New'; ctx.textAlign='left';
+    ctx.fillText(z.name,14,H-14);
+  }
 }
 
-function gameOver(){
+// ─── GAME LOOP ────────────────────────────────────────────────────────────────
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+
+// ─── HUD ─────────────────────────────────────────────────────────────────────
+function updateHUD(){
+  if(!player) return;
+  document.getElementById('healthFill').style.width=(player.health/player.maxHealth*100)+'%';
+  document.getElementById('score').textContent=score;
+  document.getElementById('arcName').textContent=ARCS[currentArc].name;
+  document.getElementById('zoneName').textContent=getZone(worldState.currentZoneId).name;
+  document.getElementById('levelBadge').textContent=`LVL ${character.level} · ${character.xp}/${character.xpToNext} XP`;
+  const xpPct=Math.min(100,(character.xp/character.xpToNext)*100);
+  document.getElementById('xpFill').style.width=xpPct+'%';
+  document.getElementById('hSTR').textContent=character.stats.strength;
+  document.getElementById('hAGI').textContent=character.stats.agility;
+  document.getElementById('hINT').textContent=character.stats.intellect;
+  document.getElementById('hEND').textContent=character.stats.endurance;
+  document.getElementById('hLCK').textContent=character.stats.luck;
+  document.getElementById('hWave').textContent=wave;
+  document.getElementById('rpgHud').style.display='flex';
+  document.getElementById('rpgHud').style.flexDirection='column';
+  renderQuestLog();
+}
+
+function spawnDamageNumber(x,y,text,color){
+  floatingTexts.push({x,y:y,text,color,life:30});
+}
+
+// ─── QUEST LOG ──────────────────────────────────────────────────────────────
+function renderQuestLog(){
+  const ql=document.getElementById('questLog');
+  const active=Object.entries(worldState.questStates).filter(([,s])=>s==='active').map(([id])=>getQuest(id)).filter(Boolean);
+  if(!active.length){ql.style.display='none';return;}
+  ql.style.display='block';
+  ql.innerHTML=active.slice(0,3).map(q=>{
+    const obj=q.objectives[0];
+    let prog='';
+    if(obj.type==='kill') prog=`${killCounts[obj.target]||0}/${obj.count}`;
+    return `<div class="questEntry ${q.type}"><div class="qtitle">${q.title}</div><div class="qobj">${obj.label}${prog?' ('+prog+')':''}</div></div>`;
+  }).join('');
+}
+
+function checkQuestProgress(){
+  for(const [id,state] of Object.entries(worldState.questStates)){
+    if(state!=='active') continue;
+    const q=getQuest(id);
+    if(!q) continue;
+    let allDone=true;
+    for(const obj of q.objectives){
+      if(obj.type==='kill'){
+        if((killCounts[obj.target]||0)<obj.count){allDone=false;break;}
+      }
+    }
+    if(allDone){ worldState.questStates[id]='complete'; applyQuestReward(q); }
+  }
+}
+
+function applyQuestReward(quest){
+  if(!quest.reward) return;
+  if(quest.reward.xp) grantXP(quest.reward.xp);
+  if(quest.reward.item){
+    const tmpl=ITEMS.find(i=>i.id===quest.reward.item);
+    if(tmpl){ pendingLootItems.push(buildItem(tmpl,'rare',currentArc)); }
+  }
+  queueDialogue([{speaker:'SYSTEM',text:`Quest complete: ${quest.title}${quest.reward.xp?` · +${quest.reward.xp} XP`:''}. Well done.`}]);
+}
+
+// ─── XP & LEVELING ──────────────────────────────────────────────────────────
+function grantXP(amount){
+  const result=addXP(character,amount);
+  if(result.leveled){ showLevelUp(result.newLevel,result.trait); }
+  updateHUD();
+}
+
+function showLevelUp(newLevel, trait){
+  if(gameState==='playing') gameState='levelup';
+  document.getElementById('levelUpTitle').textContent=`LEVEL UP! → ${newLevel}`;
+  document.getElementById('levelUpSubtitle').textContent=`You are now Level ${newLevel}. Allocate your stat points.`;
+  document.getElementById('traitNotice').textContent=trait?`✦ Trait Unlocked: ${trait.label} — ${trait.desc}`:'';
+  document.getElementById('spendablePoints').textContent=character.statPoints;
+  document.getElementById('levelUpScreen').style.display='flex';
+}
+
+document.getElementById('levelUpDoneBtn').addEventListener('click',()=>{
+  document.getElementById('levelUpScreen').style.display='none';
+  if(gameState==='levelup') gameState='playing';
+});
+document.querySelectorAll('.statAllocBtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(character.statPoints<=0) return;
+    character.stats[btn.dataset.stat]++;
+    character.statPoints--;
+    document.getElementById('spendablePoints').textContent=character.statPoints;
+    updateHUD();
+    if(character.statPoints<=0){ document.getElementById('levelUpScreen').style.display='none'; if(gameState==='levelup') gameState='playing'; }
+  });
+});
+
+// ─── DIALOGUE ────────────────────────────────────────────────────────────────
+function queueDialogue(lines, cb=null){
+  dialogueQueue=[...lines];
+  dialogueCallback=cb;
+  if(dialogueQueue.length){ showNextDialogue(); }
+}
+function showNextDialogue(){
+  if(!dialogueQueue.length){ closeDialogue(); return; }
+  const d=dialogueQueue.shift();
+  const prev=gameState;
+  if(gameState==='playing') gameState='dialogue';
+  document.getElementById('dialogue').style.display='block';
+  document.getElementById('dialogueSpeaker').textContent='> '+d.speaker;
+  document.getElementById('dialogueText').textContent=d.text;
+}
+function closeDialogue(){
+  if(dialogueQueue.length){ showNextDialogue(); return; }
+  document.getElementById('dialogue').style.display='none';
+  if(gameState==='dialogue') gameState='playing';
+  if(dialogueCallback){ const cb=dialogueCallback; dialogueCallback=null; cb(); }
+}
+window.closeDialogue=closeDialogue;
+
+// ─── SKILL CHECKS ────────────────────────────────────────────────────────────
+function triggerSkillCheckEvent(quest){
+  if(gameState!=='playing'&&gameState!=='hub') return;
+  const obj=quest.objectives.find(o=>o.type==='check');
+  if(!obj) return;
+  pendingSkillCheck={quest,obj};
+  const prevState=gameState;
+  gameState='skillcheck';
+  const skillDef=SKILLS[obj.skill]||{stat:'intellect',label:obj.skill};
+  const statVal=character.stats[skillDef.stat]||10;
+  document.getElementById('checkTitle').textContent=`SKILL CHECK: ${skillDef.label.toUpperCase()}`;
+  document.getElementById('checkDesc').textContent=quest.description;
+  document.getElementById('checkStatInfo').textContent=`Using ${skillDef.stat.toUpperCase()} (${statVal}) · DC ${obj.dc} · Roll d20 + modifier`;
+  document.getElementById('diceDisplay').textContent='?';
+  document.getElementById('checkResult').textContent='';
+  document.getElementById('checkDetails').textContent='';
+  document.getElementById('checkRollBtn').style.display='block';
+  document.getElementById('checkSkipBtn').style.display='none';
+  document.getElementById('skillCheckScreen').style.display='flex';
+  pendingSkillCheck._prevState=prevState;
+}
+
+document.getElementById('checkRollBtn').addEventListener('click',()=>{
+  if(!pendingSkillCheck) return;
+  const {quest,obj}=pendingSkillCheck;
+  const skillDef=SKILLS[obj.skill]||{stat:'intellect'};
+  const statVal=character.stats[skillDef.stat]||10;
+  const check=d20Check(statVal,obj.dc,character.skills[obj.skill]||0);
+  // Animate dice
+  let anim=0; const interval=setInterval(()=>{
+    document.getElementById('diceDisplay').textContent=Math.floor(Math.random()*20)+1;
+    if(++anim>10){ clearInterval(interval); finalizeCheck(check,obj,quest); }
+  },80);
+});
+
+function finalizeCheck(check,obj,quest){
+  document.getElementById('diceDisplay').textContent=check.roll;
+  const success=check.success||check.critical;
+  const label=check.critical?'⚡ CRITICAL SUCCESS!':(check.fumble?'💀 FUMBLE!':(success?'✓ SUCCESS':'✗ FAILURE'));
+  document.getElementById('checkResult').textContent=label;
+  document.getElementById('checkResult').style.color=success?'#0f0':'#f44';
+  document.getElementById('checkDetails').textContent=`Roll: ${check.roll} + Mod: ${check.total-check.roll} = ${check.total} vs DC ${check.dc}`;
+  // Apply effect
+  if(success&&obj.successEffect){
+    const eff=obj.successEffect;
+    if(eff.xp) grantXP(eff.xp);
+    if(eff.item){ const t=ITEMS.find(i=>i.id===eff.item); if(t) pendingLootItems.push(buildItem(t,'uncommon',currentArc)); }
+    if(eff.heal&&player) player.heal(eff.heal);
+    if(eff.message) setTimeout(()=>queueDialogue([{speaker:'SYSTEM',text:eff.message}]),800);
+  } else if(!success&&obj.failEffect){
+    const eff=obj.failEffect;
+    if(eff.damage&&player) player.takeDamage(eff.damage);
+    if(eff.message) setTimeout(()=>queueDialogue([{speaker:'SYSTEM',text:eff.message}]),800);
+  }
+  document.getElementById('checkRollBtn').style.display='none';
+  document.getElementById('checkSkipBtn').style.display='block';
+}
+
+document.getElementById('checkSkipBtn').addEventListener('click',()=>{
+  document.getElementById('skillCheckScreen').style.display='none';
+  const prev=pendingSkillCheck?._prevState||'playing';
+  pendingSkillCheck=null;
+  gameState=prev;
+  if(pendingLootItems.length) showLootScreen();
+});
+
+// ─── LOOT SCREEN ─────────────────────────────────────────────────────────────
+function showLootScreen(){
+  if(!pendingLootItems.length) return;
+  const items=[...pendingLootItems]; pendingLootItems=[];
+  const rd=RARITY_DATA;
+  document.getElementById('lootItems').innerHTML=items.map((it,idx)=>{
+    const r=rd[it.rarity]||rd.common;
+    const stats=Object.entries(it.stats||{}).map(([k,v])=>`${k[0].toUpperCase()}: ${v>0?'+':''}${v}`).join(' · ');
+    const affixText=it.affixes.map(a=>a.label).join(', ');
+    return `<div class="lootCard ${it.rarity}" data-idx="${idx}" style="border-color:${r.color}">
+      <div class="lname" style="color:${r.color}">${it.name}</div>
+      <div class="ltype">${it.type}</div>
+      <div class="irarity" style="color:${r.color}">${r.label}</div>
+      ${stats?`<div class="lstats">${stats}</div>`:''}
+      ${affixText?`<div class="lstats" style="color:#c4f">${affixText}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('lootXPNotice').textContent=`+${pendingXP} XP earned this encounter`;
+  pendingXP=0;
+  document.getElementById('lootScreen').style.display='flex';
+  // Click to equip
+  document.querySelectorAll('.lootCard').forEach(card=>{
+    card.addEventListener('click',()=>{
+      const item=items[parseInt(card.dataset.idx)];
+      if(item.type==='weapon') equipment.weapon=item;
+      else if(item.type==='armor') equipment.armor=item;
+      else if(item.type==='relic') equipment.relic=item;
+      else if(item.type==='consumable'){ applyConsumable(item); }
+      card.style.opacity='0.4';
+      card.style.cursor='default';
+    });
+  });
+}
+
+function applyConsumable(item){
+  if(!item.use) return;
+  if(item.use.heal&&player) player.heal(item.use.heal);
+  if(item.use.xp) grantXP(item.use.xp);
+}
+
+document.getElementById('lootContinueBtn').addEventListener('click',()=>{
+  document.getElementById('lootScreen').style.display='none';
+  if(gameState==='loot') gameState='playing';
+  // Reinit player with new equipment
+  if(player){ const ds=getEffectiveStats(); player.maxHealth=ds.maxHealth; player.speed=ds.speed; player.critChance=ds.critChance; player.pickupDropBonus=ds.pickupDropBonus||0; }
+  updateHUD();
+});
+
+// ─── HUB SCREEN ──────────────────────────────────────────────────────────────
+function showHub(){
+  gameState='hub';
+  const zoneId=worldState.currentZoneId;
+  const zone=getZone(zoneId);
+  const meta=getZoneMeta(zoneId);
+  document.getElementById('hubTitle').textContent=zone.name;
+  document.getElementById('hubAmbient').textContent=meta.ambientText||'';
+
+  // Character stats panel
+  const ds=getEffectiveStats();
+  document.getElementById('charStats').innerHTML=Object.entries(character.stats).map(([k,v])=>
+    `<div class="statRow"><span>${k.toUpperCase()}</span><span>${v} (${modifier(v)>=0?'+':''}${modifier(v)})</span></div>`
+  ).join('')+`<div class="statRow"><span>LEVEL</span><span>${character.level}</span></div>`
+  +`<div class="statRow"><span>HP</span><span>${player?Math.floor(player.health):'-'}/${ds.maxHealth}</span></div>`
+  +`<div class="statRow"><span>XP</span><span>${character.xp}/${character.xpToNext}</span></div>`;
+
+  // Equipment
+  document.getElementById('equipSlots').innerHTML=[
+    ['weapon','WEAPON'],['armor','ARMOR'],['relic','RELIC']
+  ].map(([slot,label])=>{
+    const it=equipment[slot];
+    if(!it) return `<div class="itemSlot"><span style="color:#444">${label}: Empty</span></div>`;
+    const r=RARITY_DATA[it.rarity]||RARITY_DATA.common;
+    return `<div class="itemSlot"><span class="iname" style="color:${r.color}">${it.name}</span><span class="irarity" style="color:${r.color}"> [${r.label}]</span></div>`;
+  }).join('');
+
+  // NPCs
+  const npcs=meta.npcs||[];
+  document.getElementById('npcList').innerHTML=npcs.length
+    ? npcs.map(n=>`<div class="npcEntry" data-npc="${n.id}"><b style="color:#0ff">${n.name}</b><br>${n.dialogue}</div>`).join('')
+    : '<div style="color:#444;font-size:11px">No contacts in this area.</div>';
+
+  // Zone map
+  const current=getZone(worldState.currentZoneId);
+  const zoneHtml=current.connects.map(cid=>{
+    const cz=getZone(cid);
+    const cleared=worldState.clearedZones.has(cid);
+    const isBoss=!!cz.boss;
+    const clr=zoneTypeColor(cz.type);
+    return `<div class="zoneEntry ${cz.type}${cleared?' cleared':''}${isBoss?' boss':''}" data-zone="${cid}" style="color:${clr}">
+      ${isBoss?'★ ':''}<b>${cz.name}</b> <span style="color:#555;font-size:10px">[${cz.type}]</span>${cleared?' ✓':''}
+    </div>`;
+  }).join('');
+  document.getElementById('zoneList').innerHTML=zoneHtml||'<div style="color:#444">No connected zones.</div>';
+
+  // Quests
+  const arcQuests=[...getMainQuests(currentArc),...getSideQuests(currentArc)];
+  document.getElementById('hubQuestList').innerHTML=arcQuests.map(q=>{
+    const state=worldState.questStates[q.id]||'inactive';
+    const stateColor={active:'#ff0',complete:'#0f0',failed:'#f00',inactive:'#555'}[state];
+    return `<div class="questEntry ${q.type}" data-quest="${q.id}" style="cursor:pointer;border-left-color:${stateColor}">
+      <div class="qtitle" style="color:${stateColor}">[${state.toUpperCase()}] ${q.title}</div>
+      <div class="qobj">${q.description.substring(0,60)}${q.description.length>60?'...':''}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('hubScreen').style.display='flex';
+  document.getElementById('rpgHud').style.display='none';
+  document.getElementById('questLog').style.display='none';
+
+  // Activate quests for current arc
+  for(const q of getMainQuests(currentArc)){
+    if(!worldState.questStates[q.id]){
+      if(!q.prerequisite||worldState.questStates[q.prerequisite]==='complete'){
+        worldState.questStates[q.id]='active';
+      }
+    }
+  }
+  for(const q of getSideQuests(currentArc)){
+    if(!worldState.questStates[q.id]) worldState.questStates[q.id]='active';
+  }
+}
+
+document.getElementById('hubContinueBtn').addEventListener('click',()=>{
+  const selectedZoneId=document.querySelector('.zoneEntry.selected-zone')?.dataset.zone;
+  if(selectedZoneId){
+    travelTo(worldState,selectedZoneId);
+  }
+  document.getElementById('hubScreen').style.display='none';
+  document.getElementById('rpgHud').style.display='flex';
+  document.getElementById('rpgHud').style.flexDirection='column';
+  document.getElementById('questLog').style.display='block';
+  gameState='playing';
+  init();
+  updateHUD();
+});
+
+document.getElementById('hubScreen').addEventListener('click', e=>{
+  const zoneEl=e.target.closest('.zoneEntry');
+  if(zoneEl){
+    document.querySelectorAll('.zoneEntry').forEach(el=>el.classList.remove('selected-zone'));
+    zoneEl.classList.add('selected-zone');
+    zoneEl.style.borderColor='#0ff';
+    document.getElementById('hubContinueBtn').textContent=`TRAVEL TO ${getZone(zoneEl.dataset.zone).name.toUpperCase()}`;
+    return;
+  }
+  const questEl=e.target.closest('[data-quest]');
+  if(questEl){
+    const q=getQuest(questEl.dataset.quest);
+    if(q) queueDialogue([{speaker:'QUEST SYSTEM',text:`${q.title}: ${q.description}`}]);
+  }
+  const npcEl=e.target.closest('.npcEntry');
+  if(npcEl){
+    const meta=getZoneMeta(worldState.currentZoneId);
+    const npc=meta.npcs?.find(n=>n.id===npcEl.dataset.npc);
+    if(npc) queueDialogue([{speaker:npc.name,text:npc.dialogue}]);
+  }
+});
+
+// ─── GAME FLOW ────────────────────────────────────────────────────────────────
+function startGame(){
+  document.getElementById('startScreen').style.display='none';
+  const arcHub=getHubForArc(currentArc);
+  if(arcHub) worldState.currentZoneId=arcHub.id;
+  init();
+  showHub();
+}
+
+function endGame(){
   gameState='gameover';
-  totalScore += score;
-  document.getElementById('gameOverScore').textContent = `Data Fragments Collected: ${score} | Total: ${totalScore}`;
+  totalScore+=score;
+  document.getElementById('gameOverScore').textContent=`Data Fragments: ${score} · Total: ${totalScore} · Level: ${character.level}`;
   document.getElementById('gameOver').style.display='flex';
 }
 
 function bossDefeated(){
   gameState='victory';
-  totalScore += score;
-  let arc = ARCS[currentArc];
+  totalScore+=score;
+  const arc=ARCS[currentArc];
+  clearZone(worldState,worldState.currentZoneId);
+  setFlag(worldState,`arc_${currentArc}_complete`,true);
   if(!completedArcs.includes(currentArc)) completedArcs.push(currentArc);
-  document.getElementById('victoryText').textContent = arc.victoryText;
-  
-  if(currentArc < ARCS.length-1){
-    document.getElementById('victoryTitle').textContent = `${arc.name} — CLEARED`;
-    document.getElementById('nextBtn').textContent = 'CONTINUE TO NEXT ARC';
+  document.getElementById('victoryText').textContent=arc.victoryText;
+  if(currentArc<ARCS.length-1){
+    document.getElementById('victoryTitle').textContent=`${arc.name} — CLEARED`;
+    document.getElementById('nextBtn').textContent='CONTINUE TO NEXT ARC';
   } else {
-    document.getElementById('victoryTitle').textContent = '★ MULTIVERSE COMPLETE ★';
-    document.getElementById('nextBtn').textContent = 'RETURN TO MENU';
+    document.getElementById('victoryTitle').textContent='★ MULTIVERSE COMPLETE ★';
+    document.getElementById('nextBtn').textContent='RETURN TO MENU';
   }
   document.getElementById('victory').style.display='flex';
+  // Show loot if any pending
+  if(pendingLootItems.length) setTimeout(()=>showLootScreen(),500);
 }
+window.bossDefeated=bossDefeated;
 
 function nextArc(){
   document.getElementById('victory').style.display='none';
-  if(currentArc < ARCS.length-1){
+  if(currentArc<ARCS.length-1){
     currentArc++;
+    const arcHub=getHubForArc(currentArc);
+    if(arcHub) worldState.currentZoneId=arcHub.id;
     init();
-    let arc = ARCS[currentArc];
-    dialogueIndex = 0;
-    let d = arc.dialogue[0];
-    showDialogue(d.speaker, d.text);
-    gameState='dialogue';
+    showHub();
   } else {
-    // All arcs complete — back to menu
     location.reload();
   }
 }
+window.nextArc=nextArc;
 
-// ─── INPUT ───
-document.addEventListener('keydown', e=>{
-  keys[e.key.toLowerCase()] = true;
-  if(e.key==='e' || e.key==='E'){
+// ─── INPUT ───────────────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  keys[e.key.toLowerCase()]=true;
+  if(e.key==='e'||e.key==='E'){
     if(gameState==='dialogue') closeDialogue();
+    if(gameState==='playing') {
+      if(pendingLootItems.length) showLootScreen();
+    }
   }
-  if(e.key==='Escape'){
+  if(e.key==='Escape'||e.key==='Tab'){
+    e.preventDefault();
     if(gameState==='dialogue') closeDialogue();
+    else if(gameState==='playing'){ showHub(); }
+    else if(gameState==='hub'){
+      document.getElementById('hubScreen').style.display='none';
+      document.getElementById('rpgHud').style.display='flex';
+      document.getElementById('rpgHud').style.flexDirection='column';
+      document.getElementById('questLog').style.display='block';
+      gameState='playing';
+    }
   }
 });
-document.addEventListener('keyup', e=>{
-  keys[e.key.toLowerCase()] = false;
-});
-canvas.addEventListener('mousemove', e=>{
-  mouse.x=e.clientX; mouse.y=e.clientY;
-});
-canvas.addEventListener('mousedown', e=>{
-  mouse.down=true;
-});
-canvas.addEventListener('mouseup', e=>{
-  mouse.down=false;
-});
+document.addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+canvas.addEventListener('mousemove',e=>{ mouse.x=e.clientX; mouse.y=e.clientY; });
+canvas.addEventListener('mousedown',()=>{ mouse.down=true; });
+canvas.addEventListener('mouseup',()=>{ mouse.down=false; });
 
-// Arc selection
 document.querySelectorAll('.arcBtn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
+  btn.addEventListener('click',()=>{
     document.querySelectorAll('.arcBtn').forEach(b=>b.classList.remove('selected'));
     btn.classList.add('selected');
-    currentArc = parseInt(btn.dataset.arc);
+    currentArc=parseInt(btn.dataset.arc);
   });
 });
+document.getElementById('startBtn').addEventListener('click',startGame);
+document.getElementById('dialogueClose').addEventListener('click',closeDialogue);
 
-document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('dialogueClose').addEventListener('click', closeDialogue);
-
-// Start render loop for menu background
+// ─── BOOT ────────────────────────────────────────────────────────────────────
 loop();
 </script>
 </body>
