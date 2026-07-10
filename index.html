@@ -129,10 +129,6 @@ body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hid
 
 <div id="copyright">© 2026 P&B DevCo — WSL Saga Multiverse™ — Patent Pending — Paul Adcock</div>
 
-<<<<<<< HEAD
-<script src="js/game-config.js"></script>
-<script src="js/game-utils.js"></script>
-=======
 <!-- Touch Controls Overlay -->
 <div id="touchControls">
   <button id="interactTouchBtn">[ E ]</button>
@@ -141,7 +137,8 @@ body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hid
 <!-- Input mode indicator (in-game) -->
 <div id="inputModeBadge">⌨ KEYBOARD</div>
 
->>>>>>> origin/main
+<script src="js/game-config.js"></script>
+<script src="js/game-utils.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════
 // WSL SAGA MULTIVERSE — THE BREACH
@@ -178,11 +175,10 @@ let cameraShake = 0;
 let totalScore = 0;
 let completedArcs = [];
 
-<<<<<<< HEAD
 // ─── CACHED RENDERING RESOURCES ───
 let _vignetteGrad = null;
 let _vignetteW = 0, _vignetteH = 0;
-=======
+
 // ─── INPUT ABSTRACTION ───
 let inputMode = 'keyboard'; // 'keyboard' | 'gamepad' | 'touch'
 
@@ -256,7 +252,6 @@ function pollGamepad() {
   // Advance dialogue via gamepad interact
   if (gamepadState.interactPressed && gameState === 'dialogue') closeDialogue();
 }
->>>>>>> origin/main
 
 // ─── PLAYER ───
 class Player {
