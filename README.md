@@ -7,6 +7,12 @@
 
 ---
 
+## ▶️ [**PLAY THE GAME NOW — IN YOUR BROWSER, NO DOWNLOAD**](https://turtle-pb.github.io/Saga/)
+
+🎬 [Watch the Trailer](WSL_Saga_Multiverse_Trailer.mp4) · 🎮 [Play the Game](https://turtle-pb.github.io/Saga/) · 💛 [Donate](https://paypal.me/adcockp)
+
+---
+
 ## 📖 The Universe
 
 The WSL Saga Multiverse is an original science-fiction narrative universe where **Windows Subsystem for Linux** serves as a metaphysical interdimensional bridge — a living portal between civilizations that were never meant to coexist.
@@ -51,11 +57,14 @@ Features all 5 arcs with AI-generated cinematic artwork, Ken Burns zoom effects,
 
 ---
 
-## 🎮 Playable Game — *The Breach*
+## 🎮 Play the Game — *The Breach*
 
-🎮 **[WSL_Saga_Multiverse_Game.html](WSL_Saga_Multiverse_Game.html)** — A self-contained HTML5 top-down arena shooter
+### ▶️ **[CLICK HERE TO PLAY — NO DOWNLOAD REQUIRED](https://turtle-pb.github.io/Saga/)**
 
-**No installation required.** Just download and open in any browser.
+> The game runs instantly in your browser via GitHub Pages. No install, no setup, no account.
+
+### Prefer to download?
+🎮 **[WSL_Saga_Multiverse_Game.html](WSL_Saga_Multiverse_Game.html)** — Self-contained HTML5 file, works offline
 
 ### How to Play
 - **WASD / Arrow Keys** — Move
@@ -170,7 +179,7 @@ Legal counsel engaged for all IP matters.
 ### 🔗 Links
 
 - 🎬 [Watch the Trailer](WSL_Saga_Multiverse_Trailer.mp4)
-- 🎮 [Play the Game](WSL_Saga_Multiverse_Game.html)
+- 🎮 **[▶️ PLAY THE GAME NOW](https://turtle-pb.github.io/Saga/)** — No download needed!
 - 💛 [Donate via PayPal](https://paypal.me/adcockp)
 - 💙 [Donate via Chime](https://chime.com/$Paul-Adcock-1)
 - 📧 Contact: paul.dev.co@outlook.com
