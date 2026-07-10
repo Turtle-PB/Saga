@@ -42,6 +42,33 @@ body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hid
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
 .flash{animation:flashRed 0.2s}
 @keyframes flashRed{0%{filter:none}50%{filter:brightness(2) hue-rotate(180deg)}100%{filter:none}}
+/* ─── TOUCH CONTROLS ─── */
+#touchControls{position:fixed;bottom:20px;right:20px;display:none;flex-direction:column;gap:12px;z-index:30;align-items:flex-end}
+#dashTouchBtn,#interactTouchBtn{padding:0;border-radius:50%;font-family:'Courier New',monospace;font-weight:bold;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none;display:flex;align-items:center;justify-content:center}
+#dashTouchBtn{width:70px;height:70px;font-size:11px;letter-spacing:1px;background:rgba(0,255,255,0.15);border:2px solid #0ff;color:#0ff}
+#dashTouchBtn.pressed{background:rgba(0,255,255,0.45)}
+#interactTouchBtn{width:55px;height:55px;font-size:10px;background:rgba(255,255,0,0.1);border:2px solid #ff0;color:#ff0}
+#interactTouchBtn.pressed{background:rgba(255,255,0,0.35)}
+/* ─── INPUT MODE HINT ─── */
+#inputModeHint{position:fixed;bottom:5px;left:10px;font-size:10px;color:#444;z-index:50;pointer-events:none;transition:opacity 0.4s}
+#inputModeBadge{position:fixed;top:50px;right:12px;font-size:9px;color:#066;z-index:50;pointer-events:none;letter-spacing:1px}
+/* ─── MOBILE RESPONSIVE ─── */
+@media(max-width:768px){
+  #topbar{padding:8px 12px}
+  #healthBar{width:130px;height:15px}
+  #score{font-size:16px}
+  #arcName{font-size:12px}
+  #startScreen h1{font-size:28px;letter-spacing:2px}
+  #startScreen h2{font-size:14px}
+  #startScreen p{font-size:12px;max-width:90vw}
+  #startBtn{padding:12px 30px;font-size:15px}
+  .arcBtn{padding:8px 12px;font-size:11px}
+  #dialogue{padding:10px 15px 10px 15px;min-height:70px}
+  #dialogueText{font-size:13px}
+  #dialogueSpeaker{font-size:12px}
+  #gameOver h1,#victory h1{font-size:30px}
+  #restartBtn,#nextBtn{padding:10px 28px;font-size:15px}
+}
 </style>
 </head>
 <body>
@@ -84,7 +111,7 @@ body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hid
     <div class="arcBtn" data-arc="4">ARC V: Architect's Ledger</div>
   </div>
   <button id="startBtn">ENTER THE BREACH</button>
-  <p style="margin-top:20px;font-size:11px;color:#444">WASD/Arrows: Move • Mouse: Aim • Click: Fire • SPACE: Dash • E: Interact</p>
+  <p id="inputModeHint" style="margin-top:20px;font-size:11px;color:#444;position:static;bottom:auto;left:auto;pointer-events:none;transition:none">WASD/Arrows: Move • Mouse: Aim • Click: Fire • SPACE: Dash • E: Interact</p>
 </div>
 
 <div id="gameOver">
@@ -102,8 +129,19 @@ body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hid
 
 <div id="copyright">© 2026 P&B DevCo — WSL Saga Multiverse™ — Patent Pending — Paul Adcock</div>
 
+<<<<<<< HEAD
 <script src="js/game-config.js"></script>
 <script src="js/game-utils.js"></script>
+=======
+<!-- Touch Controls Overlay -->
+<div id="touchControls">
+  <button id="interactTouchBtn">[ E ]</button>
+  <button id="dashTouchBtn">DASH</button>
+</div>
+<!-- Input mode indicator (in-game) -->
+<div id="inputModeBadge">⌨ KEYBOARD</div>
+
+>>>>>>> origin/main
 <script>
 // ═══════════════════════════════════════════════════════
 // WSL SAGA MULTIVERSE — THE BREACH
@@ -140,9 +178,85 @@ let cameraShake = 0;
 let totalScore = 0;
 let completedArcs = [];
 
+<<<<<<< HEAD
 // ─── CACHED RENDERING RESOURCES ───
 let _vignetteGrad = null;
 let _vignetteW = 0, _vignetteH = 0;
+=======
+// ─── INPUT ABSTRACTION ───
+let inputMode = 'keyboard'; // 'keyboard' | 'gamepad' | 'touch'
+
+// Gamepad state (polled each frame)
+let gamepadConnected = false;
+const gamepadState = {
+  moveX: 0, moveY: 0,
+  aimX: 0,  aimY: 0,
+  fire: false,
+  dashPressed: false, _dashPrev: false,
+  interactPressed: false, _interactPrev: false
+};
+const GAMEPAD_DEADZONE = 0.18;
+
+// Touch state
+const JOYSTICK_MAX = 65; // px radius
+const touchState = {
+  joystick: { active: false, id: -1, baseX: 0, baseY: 0, dx: 0, dy: 0 },
+  fire: false, fireId: -1,
+  aimX: 0, aimY: 0
+};
+
+function setInputMode(mode) {
+  if (inputMode === mode) return;
+  inputMode = mode;
+  // Show/hide touch overlay
+  if (mode === 'touch') {
+    document.getElementById('touchControls').style.display = 'flex';
+  }
+  // Update badges
+  const badge = document.getElementById('inputModeBadge');
+  const hint  = document.getElementById('inputModeHint');
+  const labels = {
+    keyboard: { badge: '⌨ KEYBOARD', hint: 'WASD/Arrows: Move • Mouse: Aim • Click: Fire • SPACE: Dash • E: Interact' },
+    gamepad:  { badge: '🎮 GAMEPAD',  hint: 'L-Stick: Move • R-Stick: Aim • RT/A: Fire • B: Dash • X/Y: Interact' },
+    touch:    { badge: '👆 TOUCH',    hint: 'Left: Joystick • Right: Aim/Fire • DASH / [E] buttons' }
+  };
+  if (badge && labels[mode]) badge.textContent = labels[mode].badge;
+  if (hint  && labels[mode]) hint.textContent  = labels[mode].hint;
+}
+
+function pollGamepad() {
+  if (typeof navigator.getGamepads !== 'function') return;
+  const gamepads = navigator.getGamepads();
+  let gp = null;
+  for (let g of gamepads) { if (g && g.connected) { gp = g; break; } }
+  if (!gp) {
+    if (gamepadConnected) { gamepadConnected = false; setInputMode('keyboard'); }
+    gamepadState.moveX = gamepadState.moveY = 0;
+    gamepadState.fire = false;
+    return;
+  }
+  gamepadConnected = true;
+  const apply = v => Math.abs(v) > GAMEPAD_DEADZONE ? v : 0;
+  gamepadState.moveX = apply(gp.axes[0]);
+  gamepadState.moveY = apply(gp.axes[1]);
+  gamepadState.aimX  = apply(gp.axes[2] || 0);
+  gamepadState.aimY  = apply(gp.axes[3] || 0);
+  // RT (index 7, value-based) or A (index 0)
+  gamepadState.fire = (gp.buttons[7] ? gp.buttons[7].value > 0.25 : false) || (gp.buttons[0] ? gp.buttons[0].pressed : false);
+  // B (1) or LB (4) = dash
+  const dashNow = (gp.buttons[1] ? gp.buttons[1].pressed : false) || (gp.buttons[4] ? gp.buttons[4].pressed : false);
+  gamepadState.dashPressed = dashNow && !gamepadState._dashPrev;
+  gamepadState._dashPrev = dashNow;
+  // X (2) or Y (3) = interact
+  const intNow = (gp.buttons[2] ? gp.buttons[2].pressed : false) || (gp.buttons[3] ? gp.buttons[3].pressed : false);
+  gamepadState.interactPressed = intNow && !gamepadState._interactPrev;
+  gamepadState._interactPrev = intNow;
+
+  if (gamepadState.moveX || gamepadState.moveY || gamepadState.fire) setInputMode('gamepad');
+  // Advance dialogue via gamepad interact
+  if (gamepadState.interactPressed && gameState === 'dialogue') closeDialogue();
+}
+>>>>>>> origin/main
 
 // ─── PLAYER ───
 class Player {
@@ -161,38 +275,75 @@ class Player {
     this.angle = 0;
   }
   update(){
+    // ─── Movement — merge keyboard + gamepad + touch ───
     let dx=0, dy=0;
-    if(keys['w']||keys['arrowup']) dy-=1;
-    if(keys['s']||keys['arrowdown']) dy+=1;
-    if(keys['a']||keys['arrowleft']) dx-=1;
+    if(keys['w']||keys['arrowup'])    dy-=1;
+    if(keys['s']||keys['arrowdown'])  dy+=1;
+    if(keys['a']||keys['arrowleft'])  dx-=1;
     if(keys['d']||keys['arrowright']) dx+=1;
-    if(dx&&dy){dx*=0.707;dy*=0.707;}
-    
+    // Gamepad left stick
+    dx += gamepadState.moveX;
+    dy += gamepadState.moveY;
+    // Touch virtual joystick
+    if(touchState.joystick.active){ dx += touchState.joystick.dx; dy += touchState.joystick.dy; }
+    // Normalize so diagonal + analog don't exceed speed 1
+    const mag = Math.sqrt(dx*dx+dy*dy);
+    if(mag>1){ dx/=mag; dy/=mag; }
+
     let spd = this.speed;
     if(this.dashTimer>0){ spd*=3; this.dashTimer--; }
-    
+
     this.x += dx*spd;
     this.y += dy*spd;
     this.x = Math.max(this.r, Math.min(W-this.r, this.x));
     this.y = Math.max(this.r, Math.min(H-this.r, this.y));
-    
-    // Aim at mouse
-    this.angle = Math.atan2(mouse.y-this.y, mouse.x-this.x);
-    
-    // Shoot
-    if(mouse.down && this.fireTimer<=0){
+
+    // ─── Aim ───
+    if(inputMode==='gamepad' && (gamepadState.aimX||gamepadState.aimY)){
+      // Right stick — aim direction relative to player
+      this.angle = Math.atan2(gamepadState.aimY, gamepadState.aimX);
+    } else if(inputMode==='gamepad'){
+      // Auto-aim at nearest enemy when right stick is idle
+      let nearest=null, nearDist=Infinity;
+      if(enemies) for(let e of enemies){
+        const ddx=e.x-this.x, ddy=e.y-this.y, d=Math.sqrt(ddx*ddx+ddy*ddy);
+        if(d<nearDist){ nearDist=d; nearest=e; }
+      }
+      if(nearest) this.angle = Math.atan2(nearest.y-this.y, nearest.x-this.x);
+      else if(dx||dy) this.angle = Math.atan2(dy, dx);
+    } else if(inputMode==='touch' && touchState.fire){
+      // Aim at right-side touch point
+      this.angle = Math.atan2(touchState.aimY-this.y, touchState.aimX-this.x);
+    } else if(inputMode==='touch' && !touchState.fire){
+      // Auto-aim on touch mode when not firing
+      let nearest=null, nearDist=Infinity;
+      if(enemies) for(let e of enemies){
+        const ddx=e.x-this.x, ddy=e.y-this.y, d=Math.sqrt(ddx*ddx+ddy*ddy);
+        if(d<nearDist){ nearDist=d; nearest=e; }
+      }
+      if(nearest) this.angle = Math.atan2(nearest.y-this.y, nearest.x-this.x);
+    } else {
+      // Mouse aim (keyboard default)
+      this.angle = Math.atan2(mouse.y-this.y, mouse.x-this.x);
+    }
+
+    // ─── Shoot ───
+    const shouldFire = mouse.down || gamepadState.fire || touchState.fire;
+    if(shouldFire && this.fireTimer<=0){
       bullets.push(new Bullet(this.x, this.y, this.angle, this.bulletColor, 8, 400));
       this.fireTimer = this.fireRate;
     }
     if(this.fireTimer>0) this.fireTimer--;
     if(this.invuln>0) this.invuln--;
     if(dashCooldown>0) dashCooldown--;
-    
-    // Dash
-    if(keys[' '] && dashCooldown<=0 && (dx||dy)){
+
+    // ─── Dash ───
+    const dashTrigger = keys[' '] || gamepadState.dashPressed || touchState.dashTrigger;
+    if(dashTrigger && dashCooldown<=0 && (dx||dy)){
       this.dashTimer = 8;
       dashCooldown = 60;
     }
+    touchState.dashTrigger = false; // consume single-frame trigger
   }
   draw(){
     ctx.save();
@@ -503,7 +654,9 @@ function spawnWave(){
 
 function update(){
   if(gameState!=='playing') return;
-  
+
+  pollGamepad();
+
   player.update();
   
   // Spawn waves
@@ -622,6 +775,55 @@ function draw(){
     }
     ctx.fillStyle=_vignetteGrad;
     ctx.fillRect(0,0,W,H);
+    // Draw touch joystick overlay on canvas
+    if(inputMode==='touch' && touchState.joystick.active){
+      const {baseX,baseY,dx,dy} = touchState.joystick;
+      const knobX = baseX + dx*JOYSTICK_MAX;
+      const knobY = baseY + dy*JOYSTICK_MAX;
+      // Base ring
+      ctx.save();
+      ctx.globalAlpha=0.35;
+      ctx.strokeStyle='#0ff';
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.arc(baseX,baseY,JOYSTICK_MAX,0,Math.PI*2);
+      ctx.stroke();
+      ctx.globalAlpha=0.15;
+      ctx.fillStyle='#0ff';
+      ctx.beginPath();
+      ctx.arc(baseX,baseY,JOYSTICK_MAX,0,Math.PI*2);
+      ctx.fill();
+      // Knob
+      ctx.globalAlpha=0.7;
+      ctx.fillStyle='#0ff';
+      ctx.beginPath();
+      ctx.arc(knobX,knobY,26,0,Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha=1;
+      ctx.strokeStyle='#fff';
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.arc(knobX,knobY,26,0,Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    // Fire zone hint (touch mode only, when not firing)
+    if(inputMode==='touch' && gameState==='playing'){
+      ctx.save();
+      ctx.globalAlpha=0.12;
+      ctx.fillStyle='#ff4444';
+      ctx.fillRect(W*0.45,H*0.55,W*0.55,H*0.45);
+      ctx.globalAlpha=0.25;
+      ctx.strokeStyle='#f44';
+      ctx.lineWidth=1;
+      ctx.strokeRect(W*0.45,H*0.55,W*0.55,H*0.45);
+      ctx.globalAlpha=0.4;
+      ctx.fillStyle='#ff6666';
+      ctx.font='11px Courier New';
+      ctx.textAlign='center';
+      ctx.fillText('HOLD TO FIRE / AIM',W*0.72,H*0.6);
+      ctx.restore();
+    }
   }
 }
 
@@ -722,6 +924,7 @@ function nextArc(){
 // ─── INPUT ───
 document.addEventListener('keydown', e=>{
   keys[e.key.toLowerCase()] = true;
+  setInputMode('keyboard');
   if(e.key==='e' || e.key==='E'){
     if(gameState==='dialogue') closeDialogue();
   }
@@ -734,13 +937,118 @@ document.addEventListener('keyup', e=>{
 });
 canvas.addEventListener('mousemove', e=>{
   mouse.x=e.clientX; mouse.y=e.clientY;
+  setInputMode('keyboard');
 });
 canvas.addEventListener('mousedown', ()=>{
   mouse.down=true;
+  setInputMode('keyboard');
 });
 canvas.addEventListener('mouseup', ()=>{
   mouse.down=false;
 });
+
+// ─── GAMEPAD CONNECT / DISCONNECT ───
+window.addEventListener('gamepadconnected', e=>{
+  gamepadConnected = true;
+  setInputMode('gamepad');
+  console.log('[Input] Gamepad connected:', e.gamepad.id);
+});
+window.addEventListener('gamepaddisconnected', ()=>{
+  gamepadConnected = false;
+  gamepadState.moveX=gamepadState.moveY=0;
+  gamepadState.fire=false;
+  setInputMode('keyboard');
+  console.log('[Input] Gamepad disconnected');
+});
+
+// ─── TOUCH INPUT ───
+function _touchLeft(x){ return x < W*0.45; }
+
+canvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  setInputMode('touch');
+  document.getElementById('touchControls').style.display='flex';
+  for(let t of e.changedTouches){
+    const x=t.clientX, y=t.clientY;
+    // Advance dialogue with any tap
+    if(gameState==='dialogue'){ closeDialogue(); return; }
+    if(_touchLeft(x) && !touchState.joystick.active){
+      // Start joystick
+      touchState.joystick.active=true;
+      touchState.joystick.id=t.identifier;
+      touchState.joystick.baseX=x;
+      touchState.joystick.baseY=y;
+      touchState.joystick.dx=0;
+      touchState.joystick.dy=0;
+    } else if(!_touchLeft(x) && touchState.fireId===-1){
+      // Fire zone
+      touchState.fire=true;
+      touchState.fireId=t.identifier;
+      touchState.aimX=x;
+      touchState.aimY=y;
+    }
+  }
+},{passive:false});
+
+canvas.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  for(let t of e.changedTouches){
+    if(t.identifier===touchState.joystick.id){
+      const rx=t.clientX-touchState.joystick.baseX;
+      const ry=t.clientY-touchState.joystick.baseY;
+      const dist=Math.sqrt(rx*rx+ry*ry);
+      const clamped=Math.min(dist,JOYSTICK_MAX);
+      if(dist>0){ touchState.joystick.dx=(rx/dist)*(clamped/JOYSTICK_MAX); touchState.joystick.dy=(ry/dist)*(clamped/JOYSTICK_MAX); }
+      else { touchState.joystick.dx=0; touchState.joystick.dy=0; }
+    }
+    if(t.identifier===touchState.fireId){
+      touchState.aimX=t.clientX;
+      touchState.aimY=t.clientY;
+    }
+  }
+},{passive:false});
+
+canvas.addEventListener('touchend', e=>{
+  e.preventDefault();
+  for(let t of e.changedTouches){
+    if(t.identifier===touchState.joystick.id){
+      touchState.joystick.active=false;
+      touchState.joystick.id=-1;
+      touchState.joystick.dx=0;
+      touchState.joystick.dy=0;
+    }
+    if(t.identifier===touchState.fireId){
+      touchState.fire=false;
+      touchState.fireId=-1;
+    }
+  }
+},{passive:false});
+
+canvas.addEventListener('touchcancel', e=>{
+  touchState.joystick.active=false; touchState.joystick.id=-1; touchState.joystick.dx=0; touchState.joystick.dy=0;
+  touchState.fire=false; touchState.fireId=-1;
+},{passive:false});
+
+// Touch DASH button
+const _dashBtn=document.getElementById('dashTouchBtn');
+if(_dashBtn){
+  _dashBtn.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    touchState.dashTrigger=true;
+    _dashBtn.classList.add('pressed');
+    setInputMode('touch');
+  },{passive:false});
+  _dashBtn.addEventListener('touchend',e=>{e.preventDefault();_dashBtn.classList.remove('pressed');},{passive:false});
+}
+// Touch INTERACT/dialogue button
+const _intBtn=document.getElementById('interactTouchBtn');
+if(_intBtn){
+  _intBtn.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(gameState==='dialogue') closeDialogue();
+    setInputMode('touch');
+  },{passive:false});
+}
 
 // Arc selection
 document.querySelectorAll('.arcBtn').forEach(btn=>{

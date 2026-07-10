@@ -73,6 +73,24 @@ Features all 5 arcs with AI-generated cinematic artwork, Ken Burns zoom effects,
 - **SPACE** — Dash
 - **E / ESC** — Advance dialogue
 
+### Controller Support 🎮
+- **Left Stick** — Move
+- **Right Stick** — Aim (auto-aims at nearest enemy when idle)
+- **RT / A button** — Fire
+- **B button / LB** — Dash
+- **X / Y button** — Advance dialogue
+- Plug in any Xbox, PlayStation, or generic USB/Bluetooth controller — detected automatically!
+
+### Mobile Touch Controls 📱
+- **Left side of screen** — Virtual joystick (move)
+- **Right side of screen** — Aim + hold to fire
+- **DASH button** (bottom-right overlay) — Dash
+- **[ E ] button** — Advance dialogue
+- Full landscape/portrait support — [see MOBILE.md](MOBILE.md)
+
+> The game auto-detects your input method and updates on-screen hints instantly.
+> Full details: [CONTROLS.md](CONTROLS.md) | [MOBILE.md](MOBILE.md)
+
 ### Game Features
 - 5 playable arcs, each with unique enemies, bosses, and story dialogue
 - Fight iconic bosses: The Architect of Cupertino, SLCK-9, Daemon-7, The ARM Dominion, and The Ledger itself
@@ -214,6 +232,9 @@ Legal counsel engaged for all IP matters.
 
 - 🎬 [Watch the Trailer](WSL_Saga_Multiverse_Trailer.mp4)
 - 🎮 **[▶️ PLAY THE GAME NOW](https://turtle-pb.github.io/Saga/)** — No download needed!
+- 🎮 [Controls Reference](CONTROLS.md) — keyboard, gamepad, touch mappings
+- 📱 [Mobile Guide](MOBILE.md) — touch controls, device support, tips
+- 📋 [Changelog](CHANGELOG.md) — version history and new features
 - 💛 [Donate via PayPal](https://paypal.me/adcockp)
 - 💙 [Donate via Chime](https://chime.com/$Paul-Adcock-1)
 - 📧 Contact: paul.dev.co@outlook.com
