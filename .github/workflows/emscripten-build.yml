@@ -17,6 +17,8 @@ jobs:
   build-wasm:
     name: Build WebAssembly (Dear ImGui + Emscripten)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout (with submodules)
