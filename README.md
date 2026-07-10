@@ -13,6 +13,30 @@
 
 ---
 
+## 📚 Project Documentation
+
+### Release & readiness
+
+- [ENGINE_READINESS_CHECKLIST.md](ENGINE_READINESS_CHECKLIST.md)
+- [RELEASE_GATE_V1.md](RELEASE_GATE_V1.md)
+- [KNOWN_ISSUES.md](KNOWN_ISSUES.md)
+- [GAME_DESIGN.md](GAME_DESIGN.md)
+- [ROADMAP.md](ROADMAP.md)
+
+### Narrative reference
+
+- [LORE.md](LORE.md)
+- [STORY_ARCS.md](STORY_ARCS.md)
+- [PLAYABLE_CHARACTERS.md](PLAYABLE_CHARACTERS.md)
+- [FACTIONS.md](FACTIONS.md)
+- [COMPANIONS_AND_NPCS.md](COMPANIONS_AND_NPCS.md)
+- [LOCATIONS.md](LOCATIONS.md)
+- [BESTIARY_LORE.md](BESTIARY_LORE.md)
+- [QUESTLINES.md](QUESTLINES.md)
+- [GLOSSARY.md](GLOSSARY.md)
+
+---
+
 ## 📖 The Universe
 
 The WSL Saga Multiverse is an original science-fiction narrative universe where **Windows Subsystem for Linux** serves as a metaphysical interdimensional bridge — a living portal between civilizations that were never meant to coexist.

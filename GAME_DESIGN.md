@@ -1,5 +1,11 @@
 # 🌌 WSL Saga Multiverse — Game Design Document
 
+This file describes the current Overhaul v1 design and should be read alongside the release-readiness docs for ship/no-ship decisions:
+
+- [ENGINE_READINESS_CHECKLIST.md](ENGINE_READINESS_CHECKLIST.md)
+- [RELEASE_GATE_V1.md](RELEASE_GATE_V1.md)
+- [KNOWN_ISSUES.md](KNOWN_ISSUES.md)
+
 ## Overview
 
 **WSL Saga Multiverse: The Breach** is a top-down arena shooter / tabletop RPG hybrid set in the WSL Saga Multiverse IP. The player fights through five narrative arcs — each a distinct digital civilization — building a character, navigating connected zones, and making skill-check-driven choices with real consequences.

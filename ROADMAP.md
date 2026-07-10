@@ -1,5 +1,23 @@
 # 🗺️ WSL Saga Multiverse — Roadmap
 
+## Release gate dependency track
+
+Current release-readiness dependencies remain tracked in:
+
+- [ENGINE_READINESS_CHECKLIST.md](ENGINE_READINESS_CHECKLIST.md)
+- [RELEASE_GATE_V1.md](RELEASE_GATE_V1.md)
+- [KNOWN_ISSUES.md](KNOWN_ISSUES.md)
+
+Near-term validation priorities before a v1-ready decision:
+
+- Reproduce and root-cause rapid `gameover` behavior after intro completion
+- Verify one full arc clear in the browser
+- Verify arc-to-arc transition through `nextArc()`
+- Add a repeatable validation path for boot and core loop behavior
+- Decide whether persistence is intentionally session-only or requires save/load before release
+
+---
+
 ## Current State: Overhaul v1 (Gears branch)
 
 ### ✅ Implemented in Overhaul v1
@@ -8,7 +26,7 @@
 - **Character system**: 5 stats (STR/AGI/INT/END/LCK), 8 skills, 8 traits
 - **d20 Tabletop check system**: Modifier-based rolls, DC difficulty, crit/fumble
 - **Zone framework**: 20 zones across 5 arcs, typed as hub/explore/danger/boss
-- **XP & leveling**: Kill XP by tier + arc, level up, stat point allocation, trait unlocks
+- **XP & leveling**: Kill XP by tier + arc, level up, stat point allocation, trait unlock
 - **Loot system**: 5 rarity tiers, item affixes (10 types), equipment slots (weapon/armor/relic)
 - **Enemy archetypes**: 6 roles (chaser, sniper, swarmer, shielder, bomber, boss) with distinct AI
 - **Quest system**: Main quests, side quests, random exploration events with skill checks
