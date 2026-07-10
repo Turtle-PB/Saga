@@ -1,0 +1,67 @@
+#
+# Makefile.native — WSL Saga Multiverse (Dear ImGui, native SDL2+GL build)
+# © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+#
+# Prerequisites (Linux / Debian/Ubuntu)
+#   sudo apt install libsdl2-dev libgl1-mesa-dev
+#
+# Prerequisites (macOS, Homebrew)
+#   brew install sdl2
+#
+# Build:
+#   make -f Makefile.native
+# Run:
+#   ./saga
+
+CXX = g++
+
+IMGUI_DIR = ../imgui
+SRC_DIR   = src
+EXE       = saga
+
+SOURCES  = $(SRC_DIR)/main.cpp
+SOURCES += $(IMGUI_DIR)/imgui.cpp
+SOURCES += $(IMGUI_DIR)/imgui_demo.cpp
+SOURCES += $(IMGUI_DIR)/imgui_draw.cpp
+SOURCES += $(IMGUI_DIR)/imgui_tables.cpp
+SOURCES += $(IMGUI_DIR)/imgui_widgets.cpp
+SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp
+SOURCES += $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
+
+OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
+
+UNAME_S := $(shell uname -s)
+
+CPPFLAGS  = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(SRC_DIR)
+CPPFLAGS += -std=c++17 -Wall -Wformat -O2 -g
+
+LIBS =
+ifeq ($(UNAME_S), Linux)
+	LIBS += -lGL -ldl `sdl2-config --libs`
+	CPPFLAGS += `sdl2-config --cflags`
+endif
+ifeq ($(UNAME_S), Darwin)
+	LIBS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
+	LIBS += `sdl2-config --libs`
+	CPPFLAGS += `sdl2-config --cflags` -I/usr/local/include -I/opt/local/include
+endif
+
+%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+%.o: $(IMGUI_DIR)/%.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+%.o: $(IMGUI_DIR)/backends/%.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+all: $(EXE)
+	@echo "Build complete: ./$(EXE)"
+
+$(EXE): $(OBJS)
+	$(CXX) -o $@ $(OBJS) $(LIBS)
+
+clean:
+	rm -f $(OBJS) $(EXE)
+
+.PHONY: all clean

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<!--
+  shell.html — Emscripten HTML shell for WSL Saga Multiverse (C++/WASM)
+  © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+
+  This file is the custom shell passed to emcc via --shell-file.
+  Emscripten replaces {{{ SCRIPT }}} with the generated JS loader.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WSL Saga Multiverse — The Breach (WebAssembly)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #0ff;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      user-select: none;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, #001a2e, #000);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 0.6s;
+    }
+
+    #loading h1 {
+      font-size: 36px;
+      letter-spacing: 4px;
+      text-shadow: 0 0 20px #0ff, 0 0 40px #008;
+      animation: pulse 2s infinite;
+      margin-bottom: 12px;
+    }
+
+    #loading h2 {
+      font-size: 14px;
+      color: #ff0;
+      letter-spacing: 3px;
+      margin-bottom: 40px;
+      text-shadow: 0 0 8px #ff0;
+    }
+
+    #progressContainer {
+      width: 360px;
+      height: 6px;
+      border: 1px solid #0ff;
+      border-radius: 3px;
+      background: rgba(0,255,255,0.08);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    #progressBar {
+      height: 100%;
+      background: linear-gradient(90deg, #0f0, #0ff);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    #statusText {
+      font-size: 11px;
+      color: #066;
+      letter-spacing: 2px;
+    }
+
+    #canvas {
+      display: none;    /* hidden until WASM is ready */
+      cursor: crosshair;
+    }
+
+    #error {
+      display: none;
+      color: #f44;
+      font-size: 14px;
+      text-align: center;
+      max-width: 500px;
+      line-height: 1.7;
+      padding: 20px;
+    }
+
+    #copyright {
+      position: fixed;
+      bottom: 6px;
+      right: 10px;
+      font-size: 10px;
+      color: #222;
+      z-index: 50;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+  </style>
+</head>
+<body>
+
+  <!-- Loading screen shown while WASM downloads -->
+  <div id="loading">
+    <h1>WSL SAGA MULTIVERSE</h1>
+    <h2>THE BREACH — WebAssembly Engine</h2>
+    <div id="progressContainer"><div id="progressBar"></div></div>
+    <div id="statusText">INITIALISING WASM RUNTIME...</div>
+  </div>
+
+  <!-- Game canvas — Emscripten renders here -->
+  <canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+
+  <!-- Error display -->
+  <div id="error">
+    <strong>ENGINE FAILURE</strong><br>
+    WebAssembly is required to run this game.<br>
+    Please use a modern browser (Chrome 90+, Firefox 90+, Safari 15+).
+  </div>
+
+  <div id="copyright">© 2026 P&B DevCo · Paul Adcock · All Rights Reserved</div>
+
+  <script type='text/javascript'>
+    var Module = {
+      canvas: (function () {
+        var canvas = document.getElementById('canvas');
+        return canvas;
+      })(),
+
+      // Called by Emscripten as bytes arrive
+      setStatus: function (text) {
+        var statusEl = document.getElementById('statusText');
+        if (statusEl) statusEl.textContent = text || 'LOADING...';
+      },
+
+      // Progress callback
+      monitorRunDependencies: function (left) {
+        // nothing — progress is driven by onprogress below
+      },
+
+      // Called once the runtime is fully ready
+      onRuntimeInitialized: function () {
+        var loading = document.getElementById('loading');
+        var canvas  = document.getElementById('canvas');
+        if (loading) {
+          loading.style.opacity = '0';
+          setTimeout(function () { loading.style.display = 'none'; }, 650);
+        }
+        if (canvas) {
+          // Fill the viewport
+          canvas.style.display = 'block';
+          canvas.width  = window.innerWidth;
+          canvas.height = window.innerHeight;
+          canvas.focus();
+        }
+      },
+
+      print: function (text) { console.log('[SAGA]', text); },
+      printErr: function (text) {
+        console.error('[SAGA ERR]', text);
+        document.getElementById('error').style.display = 'block';
+      }
+    };
+
+    // Wire up XHR progress to the loading bar
+    var origOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function () {
+      this.addEventListener('progress', function (e) {
+        if (e.lengthComputable) {
+          var pct = (e.loaded / e.total) * 100;
+          var bar = document.getElementById('progressBar');
+          if (bar) bar.style.width = Math.round(pct) + '%';
+        }
+      });
+      origOpen.apply(this, arguments);
+    };
+
+    // Resize canvas to fill window on resize
+    window.addEventListener('resize', function () {
+      var canvas = document.getElementById('canvas');
+      if (canvas && canvas.style.display !== 'none') {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+    });
+
+    // Detect missing WebAssembly support
+    if (typeof WebAssembly === 'undefined') {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display   = 'block';
+    }
+  </script>
+
+  {{{ SCRIPT }}}
+
+</body>
+</html>

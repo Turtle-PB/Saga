@@ -124,14 +124,37 @@ npm install
 ### Project structure
 ```
 ├── index.html                  # Main game (GitHub Pages entry point)
-├── WSL_Saga_Multiverse_Game.html # Standalone offline copy
+├── WSL_Saga_Multiverse_Game.html # Standalone offline copy (requires js/ dir)
 ├── js/
 │   ├── game-config.js          # Arc definitions (data only, importable for tests)
 │   └── game-utils.js           # Pure utility functions (collision detection, etc.)
-└── tests/
-    ├── game-config.test.js     # Validates every arc's required fields and colour values
-    └── game-utils.test.js      # Unit tests for collision-detection math
+├── tests/
+│   ├── game-config.test.js     # Validates every arc's required fields and colour values
+│   └── game-utils.test.js      # Unit tests for collision-detection math
+└── cpp/                        # C++ / Dear ImGui / WebAssembly engine
+    ├── imgui/                  # Dear ImGui (git submodule)
+    ├── src/
+    │   ├── main.cpp            # Full game engine (~600 lines, SDL2 + ImGui + GL)
+    │   └── game_arcs.h         # Arc data (C++ port of js/game-config.js)
+    ├── shell.html              # Custom Emscripten HTML shell
+    ├── Makefile.emscripten     # Build: emcc → web/saga.{html,js,wasm}
+    ├── Makefile.native         # Build: g++ → native ./saga binary
+    └── README.md               # C++ engine build instructions
 ```
+
+### Building the WebAssembly engine
+
+See [`cpp/README.md`](cpp/README.md) for full instructions.  In brief:
+
+```bash
+# Install Emscripten SDK then:
+cd cpp
+make -f Makefile.emscripten     # produces cpp/web/saga.{html,js,wasm}
+make -f Makefile.emscripten serve  # serves on http://localhost:8000
+```
+
+The CI workflow [`.github/workflows/emscripten-build.yml`](.github/workflows/emscripten-build.yml)
+builds the WASM engine automatically and uploads it as a GitHub Actions artefact.
 
 ---
 

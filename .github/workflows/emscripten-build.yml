@@ -1,0 +1,54 @@
+name: Build Emscripten Engine
+
+on:
+  push:
+    branches: [main, 'copilot/**']
+    paths:
+      - 'cpp/**'
+      - '.github/workflows/emscripten-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cpp/**'
+      - '.github/workflows/emscripten-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-wasm:
+    name: Build WebAssembly (Dear ImGui + Emscripten)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: '3.1.64'
+          actions-cache-folder: '.emsdk-cache'
+
+      - name: Verify emcc
+        run: emcc --version
+
+      - name: Build WebAssembly engine
+        working-directory: cpp
+        run: make -f Makefile.emscripten -j$(nproc)
+
+      - name: List build artefacts
+        run: ls -lh cpp/web/
+
+      - name: Upload WASM artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: saga-wasm-engine
+          path: |
+            cpp/web/saga.html
+            cpp/web/saga.js
+            cpp/web/saga.wasm
+          if-no-files-found: error
+          retention-days: 30
