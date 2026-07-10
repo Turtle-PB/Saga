@@ -1,0 +1,100 @@
+#
+# Makefile.emscripten — WSL Saga Multiverse (Dear ImGui + Emscripten)
+# © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+#
+# Prerequisites
+# ─────────────
+#   1. Install Emscripten SDK:
+#        git clone https://github.com/emscripten-core/emsdk.git
+#        cd emsdk && ./emsdk install latest && ./emsdk activate latest
+#        source ./emsdk_env.sh          (Linux / macOS)
+#   2. From this directory, run:
+#        make -f Makefile.emscripten
+#
+# Output (in ./web/)
+# ──────────────────
+#   web/saga.html   — launcher page (Emscripten shell)
+#   web/saga.js     — JS glue / Emscripten runtime
+#   web/saga.wasm   — WebAssembly binary
+#
+# Serve with:
+#   make -f Makefile.emscripten serve
+#
+# Notes
+# ─────
+#   • Emscripten bundles SDL2 (-s USE_SDL=2), no system install needed.
+#   • Target: WebGL 1.0 (OpenGL ES 2.0) for maximum browser compatibility.
+#   • USE_FILE_SYSTEM=1 to embed the misc/fonts/ directory (larger build).
+
+CC      = emcc
+CXX     = em++
+WEB_DIR = web
+EXE     = $(WEB_DIR)/saga.html
+
+IMGUI_DIR = ../imgui
+SRC_DIR   = src
+
+SOURCES  = $(SRC_DIR)/main.cpp
+SOURCES += $(IMGUI_DIR)/imgui.cpp
+SOURCES += $(IMGUI_DIR)/imgui_demo.cpp
+SOURCES += $(IMGUI_DIR)/imgui_draw.cpp
+SOURCES += $(IMGUI_DIR)/imgui_tables.cpp
+SOURCES += $(IMGUI_DIR)/imgui_widgets.cpp
+SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp
+SOURCES += $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
+
+OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
+
+CPPFLAGS  = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(SRC_DIR)
+CPPFLAGS += -DIMGUI_IMPL_OPENGL_ES2
+CPPFLAGS += -Wall -Wformat -Os
+
+EMS  = -s USE_SDL=2
+EMS += -s DISABLE_EXCEPTION_CATCHING=1
+
+LDFLAGS  = -s WASM=1
+LDFLAGS += -s ALLOW_MEMORY_GROWTH=1
+LDFLAGS += -s NO_EXIT_RUNTIME=0
+LDFLAGS += -s ASSERTIONS=1
+LDFLAGS += --shell-file shell.html
+LDFLAGS += $(EMS)
+
+USE_FILE_SYSTEM ?= 0
+ifeq ($(USE_FILE_SYSTEM), 0)
+LDFLAGS  += -s NO_FILESYSTEM=1
+CPPFLAGS += -DIMGUI_DISABLE_FILE_FUNCTIONS
+endif
+
+CPPFLAGS += $(EMS)
+
+# ── Build rules ───────────────────────────────────────────────────────────────
+
+%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+%.o: $(IMGUI_DIR)/%.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+%.o: $(IMGUI_DIR)/backends/%.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+all: $(EXE)
+	@echo "╔══════════════════════════════════════╗"
+	@echo "║  WSL Saga — Emscripten build done     ║"
+	@echo "║  Output: $(WEB_DIR)/saga.{html,js,wasm}  ║"
+	@echo "╚══════════════════════════════════════╝"
+
+$(WEB_DIR):
+	mkdir -p $@
+
+$(EXE): $(OBJS) | $(WEB_DIR)
+	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
+
+serve: all
+	@echo "Serving on http://localhost:8000 ..."
+	python3 -m http.server -d $(WEB_DIR)
+
+clean:
+	rm -rf $(OBJS) $(WEB_DIR)
+
+.PHONY: all serve clean
