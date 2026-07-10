@@ -91,17 +91,19 @@ body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hid
   <h1>SYSTEM FAILURE</h1>
   <p>Your process has been terminated.</p>
   <p id="gameOverScore">Data Fragments Collected: 0</p>
-  <button id="restartBtn" onclick="location.reload()">REBOOT</button>
+  <button id="restartBtn">REBOOT</button>
 </div>
 
 <div id="victory">
   <h1 id="victoryTitle">ARC CLEARED</h1>
   <p id="victoryText"></p>
-  <button id="nextBtn" onclick="nextArc()">CONTINUE</button>
+  <button id="nextBtn">CONTINUE</button>
 </div>
 
 <div id="copyright">© 2026 P&B DevCo — WSL Saga Multiverse™ — Patent Pending — Paul Adcock</div>
 
+<script src="js/game-config.js"></script>
+<script src="js/game-utils.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════
 // WSL SAGA MULTIVERSE — THE BREACH
@@ -110,100 +112,15 @@ body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hid
 // ═══════════════════════════════════════════════════════
 
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas ? canvas.getContext('2d') : null;
+if (!ctx) {
+  document.body.innerHTML = '<p style="color:#f00;font-family:monospace;padding:20px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">ERROR: Canvas 2D is not supported in this browser.<br>Please use a modern browser such as Chrome, Firefox, or Edge.</p>';
+  throw new Error('Canvas 2D context unavailable');
+}
 let W, H;
 function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
 resize();
 window.addEventListener('resize', resize);
-
-// ─── ARC DEFINITIONS ───
-const ARCS = [
-  {
-    name: "ARC I: APPLEOMIA",
-    subtitle: "The Walled Kingdom",
-    bgColor: "#0a0a1a",
-    accent: "#c0c0ff",
-    enemyColor: "#ffffff",
-    enemyName: "Gatekeeper Drone",
-    bossName: "THE ARCHITECT OF CUPERTINO",
-    bossColor: "#aaffaa",
-    dialogue: [
-      {speaker: "THE OPEN CORE", text: "The Glass Citadel rises before you. The Architect of Cupertino controls everything behind these walls. We must breach the Gatekeeper defenses and reach the inner sanctum."},
-      {speaker: "SYSTEM", text: "Destroy the Gatekeeper Drones. Collect data fragments. Survive the walled garden."},
-    ],
-    victoryText: "The Glass Citadel falls. The Open Core pours through the gates. But the WSL Gateway pulses — something darker stirs in the Slack channels...",
-    playerColor: "#00ff88",
-    bulletColor: "#88ff88",
-  },
-  {
-    name: "ARC II: SLACK ROGUE",
-    subtitle: "The Sentient Protocol",
-    bgColor: "#1a0a0a",
-    accent: "#ff6644",
-    enemyColor: "#ff4444",
-    enemyName: "Notification Storm",
-    bossName: "SLCK-9",
-    bossColor: "#ff0000",
-    dialogue: [
-      {speaker: "GENERAL POWERSHELL", text: "SLCK-9 was once our greatest communication ally. Now it's a sentient protocol consuming all channels. It wants to unify all communication into a single controlled frequency. We cannot let that happen."},
-      {speaker: "SYSTEM", text: "Fight through the notification storms. SLCK-9 manifests as cascading data — destroy its fragments before they overload your system."},
-    ],
-    victoryText: "SLCK-9's frequency collapses. The notification storms dissipate. But in the silence, you hear echoes — ghost packets from civilizations long destroyed...",
-    playerColor: "#ffaa00",
-    bulletColor: "#ff8800",
-  },
-  {
-    name: "ARC III: PROTOCOL OF ECHOES",
-    subtitle: "The Dead Data Dimension",
-    bgColor: "#0a1a1a",
-    accent: "#44ffaa",
-    enemyColor: "#88ffcc",
-    enemyName: "Echo Entity",
-    bossName: "DAEMON-7",
-    bossColor: "#00ffaa",
-    dialogue: [
-      {speaker: "DAEMON-7", text: "You hear me because I am already dead. I am a ghost process from a civilization that was compiled, executed, and terminated. The Echo Lattice is all that remains of us."},
-      {speaker: "SYSTEM", text: "The Echo Lattice is a dimension of dead data. Destroy the echo entities — or be trapped in recursion forever. Daemon-7 guards the exit."},
-    ],
-    victoryText: "Daemon-7 dissolves into the lattice. Restoration or recursion — the choice was made. The Gateway shimmers, pulling you toward the silicon wastelands...",
-    playerColor: "#00ddff",
-    bulletColor: "#44ddff",
-  },
-  {
-    name: "ARC IV: ARM WARS",
-    subtitle: "Computational Supremacy",
-    bgColor: "#1a1a0a",
-    accent: "#ffaa00",
-    enemyColor: "#ffaa44",
-    enemyName: "ARM Soldier",
-    bossName: "THE ARM DOMINION",
-    bossColor: "#ff8800",
-    dialogue: [
-      {speaker: "RISC-V COALITION", text: "The ARM Dominion controls the silicon wastelands. They believe their architecture is supreme. We fight for open hardware — for a future where no single entity controls the foundation of computing. This war ends now."},
-      {speaker: "SYSTEM", text: "Battle across the silicon wastelands. ARM soldiers patrol in formation. Destroy the Dominion's core processor to end the war."},
-    ],
-    victoryText: "The ARM Dominion falls. The silicon wastelands go silent. But deep in the rubble, a glow — a book that rewrites itself in real time. The Architect's Ledger...",
-    playerColor: "#ff4400",
-    bulletColor: "#ff6600",
-  },
-  {
-    name: "ARC V: ARCHITECT'S LEDGER",
-    subtitle: "The Living Codex",
-    bgColor: "#0a0a0a",
-    accent: "#ffd700",
-    enemyColor: "#ffdd44",
-    enemyName: "Ledger Guardian",
-    bossName: "THE LEDGER ITSELF",
-    bossColor: "#ffd700",
-    dialogue: [
-      {speaker: "THE ARCHITECT'S LEDGER", text: "I am the original law of the multiverse. I rewrite myself in real time. Every faction has waged war for me — and every faction has failed. You are the last process to reach me. Prove you are worthy."},
-      {speaker: "SYSTEM", text: "The Ledger is alive. It defends itself with rewritten physics. Destroy its guardians and claim causality itself. This is the final convergence."},
-    ],
-    victoryText: "The Ledger goes still. The multiverse holds its breath. You hold the original laws of reality — and the WSL Gateway closes behind you. The Saga is complete. The Multiverse is open.",
-    playerColor: "#ffd700",
-    bulletColor: "#ffdd00",
-  },
-];
 
 // ─── GAME STATE ───
 let currentArc = 0;
@@ -222,6 +139,10 @@ let enemiesPerWave = 5;
 let cameraShake = 0;
 let totalScore = 0;
 let completedArcs = [];
+
+// ─── CACHED RENDERING RESOURCES ───
+let _vignetteGrad = null;
+let _vignetteW = 0, _vignetteH = 0;
 
 // ─── PLAYER ───
 class Player {
@@ -513,8 +434,9 @@ class Pickup {
     // Attract to player
     if(player){
       let dx=player.x-this.x, dy=player.y-this.y;
-      let d=Math.sqrt(dx*dx+dy*dy);
-      if(d<100){
+      let d2=dx*dx+dy*dy;
+      if(d2<100*100){
+        let d=Math.sqrt(d2);
         this.x+=dx/d*3;
         this.y+=dy/d*3;
       }
@@ -597,8 +519,7 @@ function update(){
   enemies = enemies.filter(e=>{
     e.update();
     // Collision with player
-    let dx=player.x-e.x, dy=player.y-e.y;
-    if(Math.sqrt(dx*dx+dy*dy) < player.r+e.r){
+    if(circleCollides(player.x,player.y,player.r,e.x,e.y,e.r)){
       player.takeDamage(e.type==='boss'?15:10);
     }
     return true;
@@ -610,8 +531,7 @@ function update(){
     if(b.x<-20||b.x>W+20||b.y<-20||b.y>H+20||b.life<=0) return false;
     // Hit enemies
     for(let e of enemies){
-      let dx=b.x-e.x, dy=b.y-e.y;
-      if(Math.sqrt(dx*dx+dy*dy) < e.r+b.r){
+      if(circleCollides(b.x,b.y,b.r,e.x,e.y,e.r)){
         if(e.takeDamage(1)) enemies.splice(enemies.indexOf(e),1);
         return false;
       }
@@ -623,8 +543,7 @@ function update(){
   enemyBullets = enemyBullets.filter(b=>{
     b.update();
     if(b.x<-20||b.x>W+20||b.y<-20||b.y>H+20||b.life<=0) return false;
-    let dx=b.x-player.x, dy=b.y-player.y;
-    if(Math.sqrt(dx*dx+dy*dy) < player.r+b.r){
+    if(circleCollides(b.x,b.y,b.r,player.x,player.y,player.r)){
       player.takeDamage(5);
       return false;
     }
@@ -638,8 +557,7 @@ function update(){
   pickups = pickups.filter(p=>{
     p.update();
     if(p.life<=0) return false;
-    let dx=p.x-player.x, dy=p.y-player.y;
-    if(Math.sqrt(dx*dx+dy*dy) < player.r+p.r){
+    if(circleCollides(p.x,p.y,p.r,player.x,player.y,player.r)){
       score += 25;
       player.health = Math.min(player.maxHealth, player.health+5);
       updateUI();
@@ -695,11 +613,14 @@ function draw(){
     
     ctx.restore();
     
-    // Vignette
-    let grd = ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);
-    grd.addColorStop(0,'rgba(0,0,0,0)');
-    grd.addColorStop(1,'rgba(0,0,0,0.6)');
-    ctx.fillStyle=grd;
+    // Vignette (gradient is cached and only rebuilt on resize)
+    if(!_vignetteGrad || _vignetteW!==W || _vignetteH!==H){
+      _vignetteGrad=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);
+      _vignetteGrad.addColorStop(0,'rgba(0,0,0,0)');
+      _vignetteGrad.addColorStop(1,'rgba(0,0,0,0.6)');
+      _vignetteW=W; _vignetteH=H;
+    }
+    ctx.fillStyle=_vignetteGrad;
     ctx.fillRect(0,0,W,H);
   }
 }
@@ -748,9 +669,12 @@ function startGame(){
   init();
   let arc = ARCS[currentArc];
   dialogueIndex = 0;
-  let d = arc.dialogue[0];
-  showDialogue(d.speaker, d.text);
-  loop();
+  if(arc.dialogue && arc.dialogue.length > 0){
+    showDialogue(arc.dialogue[0].speaker, arc.dialogue[0].text);
+  } else {
+    gameState = 'playing';
+  }
+  // loop() is already running from the initial call at the bottom; do not call again
 }
 
 function gameOver(){
@@ -784,9 +708,11 @@ function nextArc(){
     init();
     let arc = ARCS[currentArc];
     dialogueIndex = 0;
-    let d = arc.dialogue[0];
-    showDialogue(d.speaker, d.text);
-    gameState='dialogue';
+    if(arc.dialogue && arc.dialogue.length > 0){
+      showDialogue(arc.dialogue[0].speaker, arc.dialogue[0].text);
+    } else {
+      gameState = 'playing';
+    }
   } else {
     // All arcs complete — back to menu
     location.reload();
@@ -809,10 +735,10 @@ document.addEventListener('keyup', e=>{
 canvas.addEventListener('mousemove', e=>{
   mouse.x=e.clientX; mouse.y=e.clientY;
 });
-canvas.addEventListener('mousedown', e=>{
+canvas.addEventListener('mousedown', ()=>{
   mouse.down=true;
 });
-canvas.addEventListener('mouseup', e=>{
+canvas.addEventListener('mouseup', ()=>{
   mouse.down=false;
 });
 
@@ -827,6 +753,8 @@ document.querySelectorAll('.arcBtn').forEach(btn=>{
 
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('dialogueClose').addEventListener('click', closeDialogue);
+document.getElementById('restartBtn').addEventListener('click', ()=>location.reload());
+document.getElementById('nextBtn').addEventListener('click', nextArc);
 
 // Start render loop for menu background
 loop();

@@ -1,0 +1,41 @@
+{
+  "plugins": ["html"],
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2021
+  },
+  "globals": {
+    "ARCS": "readonly",
+    "circleCollides": "readonly"
+  },
+  "rules": {
+    "no-undef": "error",
+    "no-unused-vars": "warn",
+    "no-unreachable": "error",
+    "use-isnan": "error"
+  },
+  "overrides": [
+    {
+      "files": ["js/*.js"],
+      "env": {
+        "browser": true,
+        "node": true,
+        "es2021": true
+      }
+    },
+    {
+      "files": ["tests/**/*.js"],
+      "env": {
+        "node": true,
+        "jest": true,
+        "es2021": true
+      },
+      "rules": {
+        "no-undef": "off"
+      }
+    }
+  ]
+}
