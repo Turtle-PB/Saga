@@ -237,20 +237,1652 @@ body{background:#000;color:#0ff;font-family:'Courier New',monospace;overflow:hid
 
 <div id="copyright">© 2026 P&B DevCo — WSL Saga Multiverse™ — Patent Pending — Paul Adcock</div>
 
-<script type="module">
+<script>
+
+// ================================================
+// INLINED ENGINE & DATA MODULES (no ES modules needed)
+// ================================================
+
+
+// --- DICE MODULE ---
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — Dice Engine
+// Tabletop-style check resolver (d20 + modifiers)
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Roll an n-sided die.
+ * @param {number} sides - Number of sides (default 20)
+ * @returns {number} Result 1..sides
+ */
+function roll(sides = 20) {
+  return Math.floor(Math.random() * sides) + 1;
+}
+
+/**
+ * Standard ability modifier from a stat value (D&D-style).
+ * stat 10 = +0, 12 = +1, 8 = -1, etc.
+ * @param {number} stat
+ * @returns {number}
+ */
+function modifier(stat) {
+  return Math.floor((stat - 10) / 2);
+}
+
+/**
+ * Perform a d20 skill check.
+ * @param {number} stat  - Ability score (e.g. intellect 10 = +0)
+ * @param {number} dc    - Difficulty Class (8=easy, 12=medium, 16=hard, 20=very hard)
+ * @param {number} bonus - Extra bonus (proficiency, item, etc.)
+ * @returns {{ roll: number, total: number, dc: number, success: boolean, critical: boolean, fumble: boolean }}
+ */
+function d20Check(stat, dc, bonus = 0) {
+  const rawRoll = roll(20);
+  const mod = modifier(stat);
+  const total = rawRoll + mod + bonus;
+  return {
+    roll: rawRoll,
+    total,
+    dc,
+    success: total >= dc,
+    critical: rawRoll === 20,
+    fumble: rawRoll === 1,
+  };
+}
+
+/**
+ * Perform a contested check (attacker vs defender).
+ * @param {number} attackStat
+ * @param {number} defendStat
+ * @returns {{ attackRoll: number, defendRoll: number, success: boolean }}
+ */
+function contestedCheck(attackStat, defendStat) {
+  const atk = roll(20) + modifier(attackStat);
+  const def = roll(20) + modifier(defendStat);
+  return { attackRoll: atk, defendRoll: def, success: atk > def };
+}
+
+/**
+ * Roll for loot rarity based on luck stat.
+ * Returns: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
+ * @param {number} luck - Luck stat (default 10)
+ * @returns {string}
+ */
+function rollRarity(luck = 10) {
+  const r = roll(100);
+  const luckMod = modifier(luck);
+  const adjusted = r + luckMod * 3;
+  if (adjusted >= 98) return 'legendary';
+  if (adjusted >= 88) return 'epic';
+  if (adjusted >= 70) return 'rare';
+  if (adjusted >= 45) return 'uncommon';
+  return 'common';
+}
+
+/**
+ * Roll damage with optional crit.
+ * @param {number} dieSides - Die type (e.g. 6 for d6)
+ * @param {number} dieCount - Number of dice
+ * @param {number} bonus    - Flat bonus (strength modifier etc.)
+ * @param {boolean} crit    - Whether this is a critical hit (doubles dice)
+ * @returns {number}
+ */
+function rollDamage(dieSides, dieCount, bonus = 0, crit = false) {
+  const rolls = crit ? dieCount * 2 : dieCount;
+  let total = bonus;
+  for (let i = 0; i < rolls; i++) total += roll(dieSides);
+  return Math.max(1, total);
+}
+
+
+// --- STATS MODULE ---
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — Character Stats Model
+// RPG attributes, skills, and traits
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+
+/** Base stat allocation at level 1 */
+const BASE_STATS = {
+  strength: 10,   // Melee/bullet damage bonus
+  agility: 10,    // Movement speed, dash cooldown reduction
+  intellect: 10,  // Skill check bonus, ability power
+  endurance: 10,  // Max health (+5 HP per point above 10)
+  luck: 10,       // Loot quality, crit chance
+};
+
+/** Derived stats calculated from base stats */
+function deriveStats(stats, level = 1) {
+  return {
+    maxHealth: 100 + (stats.endurance - 10) * 5 + (level - 1) * 10,
+    speed: 3.5 + modifier(stats.agility) * 0.2,
+    dashCooldownMax: Math.max(30, 60 - modifier(stats.agility) * 5),
+    critChance: Math.max(0.05, 0.05 + modifier(stats.luck) * 0.02),
+    damageBonus: modifier(stats.strength),
+    skillBonus: modifier(stats.intellect),
+    luckMod: modifier(stats.luck),
+  };
+}
+
+/** Available skills — each governed by a primary stat */
+const SKILLS = {
+  breach:    { stat: 'intellect', label: 'Breach',    desc: 'Hack terminals, open sealed doors' },
+  persuade:  { stat: 'intellect', label: 'Persuade',  desc: 'Talk NPCs into better outcomes' },
+  intimidate:{ stat: 'strength',  label: 'Intimidate',desc: 'Force NPCs to back down or yield' },
+  stealth:   { stat: 'agility',   label: 'Stealth',   desc: 'Avoid enemy detection' },
+  survive:   { stat: 'endurance', label: 'Survive',   desc: 'Resist status effects, traps' },
+  scan:      { stat: 'intellect', label: 'Scan',      desc: 'Reveal enemy weaknesses, hidden items' },
+  scavenge:  { stat: 'luck',      label: 'Scavenge',  desc: 'Find extra loot in ruins' },
+  first_aid: { stat: 'endurance', label: 'First Aid', desc: 'Restore HP between encounters' },
+};
+
+/** Player trait definitions — granted at specific levels */
+const TRAITS = [
+  { level: 2,  id: 'quick_draw',   label: 'Quick Draw',    desc: 'Fire rate +20%',          stat: 'agility' },
+  { level: 3,  id: 'iron_will',    label: 'Iron Will',     desc: 'Max HP +25',               stat: 'endurance' },
+  { level: 4,  id: 'eagle_eye',    label: 'Eagle Eye',     desc: 'Bullet speed +30%',        stat: 'intellect' },
+  { level: 5,  id: 'berserker',    label: 'Berserker',     desc: 'Damage +3 when HP < 30%',  stat: 'strength' },
+  { level: 6,  id: 'ghost',        label: 'Ghost',         desc: 'Dash leaves afterimage decoy', stat: 'agility' },
+  { level: 7,  id: 'salvager',     label: 'Salvager',      desc: 'Pickup drop rate +15%',    stat: 'luck' },
+  { level: 8,  id: 'overclock',    label: 'Overclock',     desc: 'Speed +10% for 5s after kill', stat: 'intellect' },
+  { level: 10, id: 'apex_process', label: 'Apex Process',  desc: 'All stats +2',             stat: null },
+];
+
+/**
+ * Create a fresh character stats object.
+ * @returns {{ stats: object, skills: object, traits: string[], level: number, xp: number, statPoints: number }}
+ */
+function createCharacter() {
+  return {
+    stats: { ...BASE_STATS },
+    skills: Object.fromEntries(Object.keys(SKILLS).map(k => [k, 1])),
+    traits: [],
+    level: 1,
+    xp: 0,
+    xpToNext: 100,
+    statPoints: 0,
+  };
+}
+
+/**
+ * Add XP and handle leveling.
+ * @param {object} character
+ * @param {number} amount
+ * @returns {{ leveled: boolean, newLevel: number, trait: object|null }}
+ */
+function addXP(character, amount) {
+  character.xp += amount;
+  let leveled = false;
+  let newLevel = character.level;
+  let trait = null;
+
+  while (character.xp >= character.xpToNext) {
+    character.xp -= character.xpToNext;
+    character.level++;
+    character.statPoints += 3;
+    character.xpToNext = Math.floor(100 * Math.pow(1.3, character.level - 1));
+    leveled = true;
+    newLevel = character.level;
+
+    // Check for trait unlock
+    const unlocked = TRAITS.find(t => t.level === character.level);
+    if (unlocked && !character.traits.includes(unlocked.id)) {
+      character.traits.push(unlocked.id);
+      trait = unlocked;
+    }
+  }
+
+  return { leveled, newLevel, trait };
+}
+
+/**
+ * Apply a trait's passive effect to derived stats.
+ * @param {string[]} traits
+ * @param {object} derived
+ * @param {object} character
+ * @returns {object} modified derived stats
+ */
+function applyTraits(traits, derived, character) {
+  const d = { ...derived };
+  if (traits.includes('quick_draw')) d.fireRateMult = (d.fireRateMult || 1) * 0.8;
+  if (traits.includes('iron_will')) d.maxHealth += 25;
+  if (traits.includes('eagle_eye')) d.bulletSpeedMult = (d.bulletSpeedMult || 1) * 1.3;
+  if (traits.includes('salvager')) d.pickupDropBonus = (d.pickupDropBonus || 0) + 0.15;
+  if (traits.includes('apex_process')) {
+    d.maxHealth += 10;
+    d.speed += 0.4;
+    d.damageBonus += 2;
+  }
+  return d;
+}
+
+
+// --- WORLD MODULE ---
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — World State Manager
+// Zone framework, quest hooks, world-state flags
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Zone types
+ * - 'hub'     : Safe town/camp. NPCs present. No enemies.
+ * - 'explore' : Open world area. Roaming encounters. Low density.
+ * - 'danger'  : High-density enemy area. Boss may spawn.
+ */
+const ZONE_TYPES = { HUB: 'hub', EXPLORE: 'explore', DANGER: 'danger' };
+
+/**
+ * Master zone map — one hub + 3 zones per arc.
+ * Each zone references an arc (0-4) and links to connected zones.
+ */
+const ZONES = [
+  // Arc I — Appleomia
+  { id: 'hub_appleomia',     arc: 0, type: 'hub',     name: 'Open Core Camp',      connects: ['zone_glass_approach'] },
+  { id: 'zone_glass_approach',arc:0, type: 'explore', name: 'Glass Approach',      connects: ['hub_appleomia','zone_gatekeeper_wall'] },
+  { id: 'zone_gatekeeper_wall',arc:0,type: 'danger',  name: 'Gatekeeper Wall',     connects: ['zone_glass_approach','zone_inner_sanctum'] },
+  { id: 'zone_inner_sanctum', arc: 0, type: 'danger', name: 'Inner Sanctum',       connects: ['zone_gatekeeper_wall','hub_slack_node'], boss: true },
+
+  // Arc II — Slack Rogue
+  { id: 'hub_slack_node',    arc: 1, type: 'hub',     name: 'Signal Relay Hub',    connects: ['zone_notification_flood'] },
+  { id: 'zone_notification_flood',arc:1,type:'explore',name:'Notification Flood',  connects: ['hub_slack_node','zone_channel_breach'] },
+  { id: 'zone_channel_breach',arc:1, type: 'danger',  name: 'Channel Breach',      connects: ['zone_notification_flood','zone_slck9_core'] },
+  { id: 'zone_slck9_core',   arc: 1, type: 'danger',  name: 'SLCK-9 Core',         connects: ['zone_channel_breach','hub_echo_lattice'], boss: true },
+
+  // Arc III — Protocol of Echoes
+  { id: 'hub_echo_lattice',  arc: 2, type: 'hub',     name: 'Echo Lattice Node',   connects: ['zone_dead_channels'] },
+  { id: 'zone_dead_channels',arc: 2, type: 'explore', name: 'Dead Channels',       connects: ['hub_echo_lattice','zone_recursion_field'] },
+  { id: 'zone_recursion_field',arc:2,type: 'danger',  name: 'Recursion Field',     connects: ['zone_dead_channels','zone_daemon7_core'] },
+  { id: 'zone_daemon7_core', arc: 2, type: 'danger',  name: 'Daemon-7 Nexus',      connects: ['zone_recursion_field','hub_silicon_ruins'], boss: true },
+
+  // Arc IV — ARM Wars
+  { id: 'hub_silicon_ruins', arc: 3, type: 'hub',     name: 'RISC-V Stronghold',   connects: ['zone_wasteland_front'] },
+  { id: 'zone_wasteland_front',arc:3,type: 'explore', name: 'Wasteland Front',     connects: ['hub_silicon_ruins','zone_dominion_march'] },
+  { id: 'zone_dominion_march',arc:3,type: 'danger',   name: 'Dominion March',      connects: ['zone_wasteland_front','zone_arm_processor'] },
+  { id: 'zone_arm_processor', arc: 3, type: 'danger', name: 'ARM Processor Core',  connects: ['zone_dominion_march','hub_ledger_approach'], boss: true },
+
+  // Arc V — Architect's Ledger
+  { id: 'hub_ledger_approach',arc:4,type: 'hub',      name: 'Convergence Point',   connects: ['zone_rewritten_laws'] },
+  { id: 'zone_rewritten_laws',arc:4,type: 'explore',  name: 'Rewritten Laws',      connects: ['hub_ledger_approach','zone_causality_rift'] },
+  { id: 'zone_causality_rift',arc:4,type: 'danger',   name: 'Causality Rift',      connects: ['zone_rewritten_laws','zone_ledger_sanctum'] },
+  { id: 'zone_ledger_sanctum',arc:4,type: 'danger',   name: 'Ledger Sanctum',      connects: ['zone_causality_rift'], boss: true },
+];
+
+/** Create the initial world state */
+function createWorldState() {
+  return {
+    currentZoneId: 'hub_appleomia',
+    visitedZones: new Set(['hub_appleomia']),
+    clearedZones: new Set(),
+    flags: {},          // arbitrary world-state flags
+    questStates: {},    // questId -> 'active'|'complete'|'failed'
+    npcStates: {},      // npcId -> { talked: bool, relation: number }
+  };
+}
+
+/** Get zone object by id */
+function getZone(id) {
+  return ZONES.find(z => z.id === id) || ZONES[0];
+}
+
+/** Get all zones for a given arc */
+function getZonesForArc(arcIndex) {
+  return ZONES.filter(z => z.arc === arcIndex);
+}
+
+/** Get the hub zone for a given arc */
+function getHubForArc(arcIndex) {
+  return ZONES.find(z => z.arc === arcIndex && z.type === 'hub');
+}
+
+/** Move to a zone (returns false if not connected) */
+function travelTo(worldState, zoneId) {
+  const current = getZone(worldState.currentZoneId);
+  if (!current.connects.includes(zoneId)) return false;
+  worldState.currentZoneId = zoneId;
+  worldState.visitedZones.add(zoneId);
+  return true;
+}
+
+/** Mark a zone as cleared (boss defeated) */
+function clearZone(worldState, zoneId) {
+  worldState.clearedZones.add(zoneId);
+}
+
+/** Set a world flag */
+function setFlag(worldState, key, value = true) {
+  worldState.flags[key] = value;
+}
+
+/** Check a world flag */
+function getFlag(worldState, key) {
+  return worldState.flags[key] || false;
+}
+
+/** Get display color for zone type */
+function zoneTypeColor(type) {
+  switch (type) {
+    case 'hub':     return '#00ff88';
+    case 'explore': return '#88ccff';
+    case 'danger':  return '#ff4444';
+    default:        return '#ffffff';
+  }
+}
+
+
+// --- PROGRESSION MODULE ---
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — Progression System
+// XP, leveling, loot drops, item stat generation
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+
+/** XP values by enemy tier */
+const XP_TABLE = {
+  minion:  10,
+  soldier: 25,
+  elite:   60,
+  boss:    200,
+};
+
+/** Rarity display data */
+const RARITY_DATA = {
+  common:    { label: 'Common',    color: '#aaaaaa', glow: '#666666' },
+  uncommon:  { label: 'Uncommon',  color: '#44dd44', glow: '#226622' },
+  rare:      { label: 'Rare',      color: '#4488ff', glow: '#224488' },
+  epic:      { label: 'Epic',      color: '#cc44ff', glow: '#661188' },
+  legendary: { label: 'Legendary', color: '#ffd700', glow: '#886600' },
+};
+
+/**
+ * Calculate XP reward for defeating an enemy.
+ * @param {string} tier - 'minion'|'soldier'|'elite'|'boss'
+ * @param {number} arcBonus - Arc index (0-4) adds a small multiplier
+ * @returns {number}
+ */
+function xpForKill(tier, arcBonus = 0) {
+  const base = XP_TABLE[tier] || XP_TABLE.minion;
+  return Math.floor(base * (1 + arcBonus * 0.15));
+}
+
+/**
+ * Generate a loot item drop.
+ * @param {number} luck - Player luck stat
+ * @param {number} arcIndex - Current arc (affects item pool)
+ * @param {string} enemyTier - Enemy tier for drop chance
+ * @returns {object|null} Item object or null (no drop)
+ */
+function generateDrop(luck, arcIndex, enemyTier = 'soldier') {
+  // Base drop chance by tier
+  const dropChance = {
+    minion:  0.10,
+    soldier: 0.25,
+    elite:   0.60,
+    boss:    1.00,
+  }[enemyTier] || 0.20;
+
+  const luckBonus = modifier(luck) * 0.05;
+  if (Math.random() > dropChance + luckBonus) return null;
+
+  // Filter items for current arc or generic
+  const pool = ITEMS.filter(i => i.arc === arcIndex || i.arc === -1);
+  if (!pool.length) return null;
+
+  const template = pool[Math.floor(Math.random() * pool.length)];
+  const rarity = rollRarity(luck);
+  return buildItem(template, rarity, arcIndex);
+}
+
+/**
+ * Build an item instance from a template + rarity.
+ * @param {object} template - Base item from ITEMS
+ * @param {string} rarity
+ * @param {number} arcIndex
+ * @returns {object}
+ */
+function buildItem(template, rarity, arcIndex = 0) {
+  const rarityMult = {
+    common:    1.0,
+    uncommon:  1.2,
+    rare:      1.5,
+    epic:      2.0,
+    legendary: 3.0,
+  }[rarity] || 1.0;
+
+  // Scale base stats by rarity
+  const statRolls = {};
+  if (template.baseStats) {
+    for (const [stat, base] of Object.entries(template.baseStats)) {
+      const variance = roll(6) - 3; // -3..+3
+      statRolls[stat] = Math.max(1, Math.round(base * rarityMult) + variance);
+    }
+  }
+
+  // Add a random affix on rare+
+  const affixes = [];
+  if (rarity === 'rare' || rarity === 'epic' || rarity === 'legendary') {
+    affixes.push(rollAffix(arcIndex));
+  }
+  if (rarity === 'epic' || rarity === 'legendary') {
+    affixes.push(rollAffix(arcIndex));
+  }
+  if (rarity === 'legendary') {
+    affixes.push(rollAffix(arcIndex));
+  }
+
+  return {
+    id: `${template.id}_${Date.now()}`,
+    templateId: template.id,
+    name: buildName(template.name, rarity, affixes),
+    type: template.type,
+    rarity,
+    stats: statRolls,
+    affixes,
+    arc: arcIndex,
+    description: template.description || '',
+  };
+}
+
+/** Affix pool */
+const AFFIX_POOL = [
+  { id: 'burning',    label: 'of Burning',   effect: { dot: { type: 'fire',  dps: 3, duration: 60 } } },
+  { id: 'shocking',   label: 'of Shocking',  effect: { dot: { type: 'shock', dps: 2, duration: 45 } } },
+  { id: 'swift',      label: 'of Swiftness', effect: { stat: 'agility',   value: 2 } },
+  { id: 'fortified',  label: 'of Fortitude', effect: { stat: 'endurance', value: 2 } },
+  { id: 'keen',       label: 'of Keen Edge', effect: { stat: 'strength',  value: 2 } },
+  { id: 'arcane',     label: 'of Arcana',    effect: { stat: 'intellect', value: 2 } },
+  { id: 'lucky',      label: "Fortune's",    effect: { stat: 'luck',      value: 2 } },
+  { id: 'phasing',    label: 'Phasing',      effect: { pierce: true } },
+  { id: 'explosive',  label: 'Explosive',    effect: { aoe: { radius: 40, damage: 5 } } },
+  { id: 'lifesteal',  label: 'of Lifesteal', effect: { lifesteal: 0.1 } },
+];
+
+function rollAffix(arcIndex) {
+  return AFFIX_POOL[Math.floor(Math.random() * AFFIX_POOL.length)];
+}
+
+function buildName(baseName, rarity, affixes) {
+  if (affixes.length === 0) return baseName;
+  if (affixes.length === 1) return `${baseName} ${affixes[0].label}`;
+  return `${affixes[0].label} ${baseName} ${affixes[1].label}`;
+}
+
+/**
+ * Apply an item's stats to a character stat block (returns new stats).
+ * @param {object} baseStats
+ * @param {object[]} equippedItems
+ * @returns {object}
+ */
+function statsWithEquipment(baseStats, equippedItems = []) {
+  const result = { ...baseStats };
+  for (const item of equippedItems) {
+    if (!item) continue;
+    for (const [stat, value] of Object.entries(item.stats || {})) {
+      if (result[stat] !== undefined) result[stat] += value;
+    }
+    for (const affix of item.affixes || []) {
+      if (affix.effect?.stat && result[affix.effect.stat] !== undefined) {
+        result[affix.effect.stat] += affix.effect.value || 0;
+      }
+    }
+  }
+  return result;
+}
+
+
+// --- ENEMIES MODULE ---
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — Enemy Definitions
+// Archetypes and spawn tables by arc/zone
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Enemy archetypes:
+ *   tier: 'minion' | 'soldier' | 'elite' | 'boss'
+ *   role: 'chaser' | 'sniper' | 'swarmer' | 'shielder' | 'bomber' | 'boss'
+ *
+ * Behavior notes:
+ *   chaser  — moves straight toward player, contact damage
+ *   sniper  — keeps distance, fires accurate projectiles
+ *   swarmer — fast, low HP, swarms in groups
+ *   shielder — slow, high HP, rotates between player and cover
+ *   bomber  — charges at player then "detonates" in AoE
+ *   boss    — unique per arc, orbiting + spread fire patterns
+ */
+const ENEMIES = [
+
+  // ─── ARC I — APPLEOMIA ─────────────────────────────────────────────
+  {
+    id: 'gatekeeper_drone',
+    arc: 0,
+    name: 'Gatekeeper Drone',
+    tier: 'minion',
+    role: 'chaser',
+    r: 12,
+    health: 3,
+    speed: 1.2,
+    fireRate: 150,
+    bulletSpeed: 200,
+    damage: 5,
+    color: '#ffffff',
+    xp: 10,
+    spawnZones: ['zone_glass_approach', 'zone_gatekeeper_wall'],
+  },
+  {
+    id: 'sentinel_protocol',
+    arc: 0,
+    name: 'Sentinel Protocol',
+    tier: 'soldier',
+    role: 'sniper',
+    r: 14,
+    health: 6,
+    speed: 0.8,
+    fireRate: 80,
+    bulletSpeed: 280,
+    damage: 8,
+    color: '#aaffaa',
+    xp: 25,
+    spawnZones: ['zone_gatekeeper_wall', 'zone_inner_sanctum'],
+  },
+  {
+    id: 'warden_elite',
+    arc: 0,
+    name: 'Warden Elite',
+    tier: 'elite',
+    role: 'shielder',
+    r: 18,
+    health: 15,
+    speed: 0.6,
+    fireRate: 60,
+    bulletSpeed: 240,
+    damage: 10,
+    color: '#88ffff',
+    xp: 60,
+    spawnZones: ['zone_inner_sanctum'],
+  },
+  {
+    id: 'architect_of_cupertino',
+    arc: 0,
+    name: 'THE ARCHITECT OF CUPERTINO',
+    tier: 'boss',
+    role: 'boss',
+    r: 50,
+    health: 50,
+    speed: 1.0,
+    fireRate: 40,
+    bulletSpeed: 250,
+    damage: 15,
+    color: '#aaffaa',
+    xp: 200,
+    spawnZones: ['zone_inner_sanctum'],
+  },
+
+  // ─── ARC II — SLACK ROGUE ───────────────────────────────────────────
+  {
+    id: 'notification_storm',
+    arc: 1,
+    name: 'Notification Storm',
+    tier: 'minion',
+    role: 'swarmer',
+    r: 10,
+    health: 2,
+    speed: 1.8,
+    fireRate: 200,
+    bulletSpeed: 180,
+    damage: 4,
+    color: '#ff4444',
+    xp: 10,
+    spawnZones: ['zone_notification_flood', 'zone_channel_breach'],
+  },
+  {
+    id: 'channel_disruptor',
+    arc: 1,
+    name: 'Channel Disruptor',
+    tier: 'soldier',
+    role: 'sniper',
+    r: 13,
+    health: 5,
+    speed: 0.9,
+    fireRate: 70,
+    bulletSpeed: 300,
+    damage: 7,
+    color: '#ff8844',
+    xp: 25,
+    spawnZones: ['zone_channel_breach', 'zone_slck9_core'],
+  },
+  {
+    id: 'overload_drone',
+    arc: 1,
+    name: 'Overload Drone',
+    tier: 'elite',
+    role: 'bomber',
+    r: 16,
+    health: 12,
+    speed: 1.4,
+    fireRate: 999,
+    bulletSpeed: 0,
+    damage: 20,
+    color: '#ffcc00',
+    xp: 60,
+    spawnZones: ['zone_slck9_core'],
+  },
+  {
+    id: 'slck9',
+    arc: 1,
+    name: 'SLCK-9',
+    tier: 'boss',
+    role: 'boss',
+    r: 50,
+    health: 50,
+    speed: 1.0,
+    fireRate: 40,
+    bulletSpeed: 250,
+    damage: 15,
+    color: '#ff0000',
+    xp: 200,
+    spawnZones: ['zone_slck9_core'],
+  },
+
+  // ─── ARC III — PROTOCOL OF ECHOES ──────────────────────────────────
+  {
+    id: 'echo_entity',
+    arc: 2,
+    name: 'Echo Entity',
+    tier: 'minion',
+    role: 'chaser',
+    r: 12,
+    health: 3,
+    speed: 1.3,
+    fireRate: 130,
+    bulletSpeed: 210,
+    damage: 5,
+    color: '#88ffcc',
+    xp: 10,
+    spawnZones: ['zone_dead_channels', 'zone_recursion_field'],
+  },
+  {
+    id: 'phantom_process',
+    arc: 2,
+    name: 'Phantom Process',
+    tier: 'soldier',
+    role: 'sniper',
+    r: 13,
+    health: 5,
+    speed: 0.7,
+    fireRate: 90,
+    bulletSpeed: 270,
+    damage: 8,
+    color: '#44ffaa',
+    xp: 25,
+    spawnZones: ['zone_recursion_field', 'zone_daemon7_core'],
+  },
+  {
+    id: 'recursion_elite',
+    arc: 2,
+    name: 'Recursion Elite',
+    tier: 'elite',
+    role: 'shielder',
+    r: 17,
+    health: 14,
+    speed: 0.5,
+    fireRate: 55,
+    bulletSpeed: 230,
+    damage: 10,
+    color: '#00ddff',
+    xp: 60,
+    spawnZones: ['zone_daemon7_core'],
+  },
+  {
+    id: 'daemon7',
+    arc: 2,
+    name: 'DAEMON-7',
+    tier: 'boss',
+    role: 'boss',
+    r: 50,
+    health: 50,
+    speed: 1.0,
+    fireRate: 40,
+    bulletSpeed: 250,
+    damage: 15,
+    color: '#00ffaa',
+    xp: 200,
+    spawnZones: ['zone_daemon7_core'],
+  },
+
+  // ─── ARC IV — ARM WARS ─────────────────────────────────────────────
+  {
+    id: 'arm_soldier',
+    arc: 3,
+    name: 'ARM Soldier',
+    tier: 'minion',
+    role: 'chaser',
+    r: 13,
+    health: 4,
+    speed: 1.1,
+    fireRate: 120,
+    bulletSpeed: 220,
+    damage: 6,
+    color: '#ffaa44',
+    xp: 10,
+    spawnZones: ['zone_wasteland_front', 'zone_dominion_march'],
+  },
+  {
+    id: 'risc_defector',
+    arc: 3,
+    name: 'RISC-V Defector',
+    tier: 'soldier',
+    role: 'sniper',
+    r: 14,
+    health: 7,
+    speed: 0.9,
+    fireRate: 75,
+    bulletSpeed: 290,
+    damage: 9,
+    color: '#ff6600',
+    xp: 25,
+    spawnZones: ['zone_dominion_march', 'zone_arm_processor'],
+  },
+  {
+    id: 'siege_unit',
+    arc: 3,
+    name: 'Siege Unit',
+    tier: 'elite',
+    role: 'bomber',
+    r: 20,
+    health: 18,
+    speed: 0.5,
+    fireRate: 45,
+    bulletSpeed: 200,
+    damage: 15,
+    color: '#ffdd00',
+    xp: 60,
+    spawnZones: ['zone_arm_processor'],
+  },
+  {
+    id: 'arm_dominion',
+    arc: 3,
+    name: 'THE ARM DOMINION',
+    tier: 'boss',
+    role: 'boss',
+    r: 50,
+    health: 50,
+    speed: 1.0,
+    fireRate: 40,
+    bulletSpeed: 250,
+    damage: 15,
+    color: '#ff8800',
+    xp: 200,
+    spawnZones: ['zone_arm_processor'],
+  },
+
+  // ─── ARC V — ARCHITECT'S LEDGER ────────────────────────────────────
+  {
+    id: 'ledger_guardian',
+    arc: 4,
+    name: 'Ledger Guardian',
+    tier: 'minion',
+    role: 'chaser',
+    r: 12,
+    health: 4,
+    speed: 1.2,
+    fireRate: 110,
+    bulletSpeed: 230,
+    damage: 6,
+    color: '#ffdd44',
+    xp: 10,
+    spawnZones: ['zone_rewritten_laws', 'zone_causality_rift'],
+  },
+  {
+    id: 'causality_wraith',
+    arc: 4,
+    name: 'Causality Wraith',
+    tier: 'soldier',
+    role: 'sniper',
+    r: 14,
+    health: 6,
+    speed: 0.85,
+    fireRate: 65,
+    bulletSpeed: 310,
+    damage: 10,
+    color: '#ffd700',
+    xp: 25,
+    spawnZones: ['zone_causality_rift', 'zone_ledger_sanctum'],
+  },
+  {
+    id: 'rewriter_elite',
+    arc: 4,
+    name: 'Rewriter Elite',
+    tier: 'elite',
+    role: 'shielder',
+    r: 18,
+    health: 16,
+    speed: 0.6,
+    fireRate: 50,
+    bulletSpeed: 260,
+    damage: 12,
+    color: '#fff700',
+    xp: 60,
+    spawnZones: ['zone_ledger_sanctum'],
+  },
+  {
+    id: 'the_ledger',
+    arc: 4,
+    name: 'THE LEDGER ITSELF',
+    tier: 'boss',
+    role: 'boss',
+    r: 50,
+    health: 50,
+    speed: 1.0,
+    fireRate: 40,
+    bulletSpeed: 250,
+    damage: 15,
+    color: '#ffd700',
+    xp: 200,
+    spawnZones: ['zone_ledger_sanctum'],
+  },
+];
+
+/** Get enemies that spawn in a given zone */
+function getEnemiesForZone(zoneId) {
+  return ENEMIES.filter(e => e.spawnZones.includes(zoneId));
+}
+
+/** Get the boss enemy for an arc */
+function getBossForArc(arcIndex) {
+  return ENEMIES.find(e => e.arc === arcIndex && e.tier === 'boss');
+}
+
+/** Build an enemy spawn table for a zone (returns array of ids to spawn) */
+function buildSpawnTable(zoneId, waveNumber = 1, arcIndex = 0) {
+  const pool = getEnemiesForZone(zoneId).filter(e => e.tier !== 'boss');
+  if (!pool.length) return [];
+
+  const count = 5 + waveNumber * 2;
+  const table = [];
+
+  // Add weights: higher tier enemies more likely at higher waves
+  for (let i = 0; i < count; i++) {
+    const rand = Math.random();
+    let tier;
+    if (waveNumber >= 3 && rand < 0.15) tier = 'elite';
+    else if (rand < 0.35) tier = 'soldier';
+    else tier = 'minion';
+
+    const candidates = pool.filter(e => e.tier === tier);
+    const source = candidates.length ? candidates : pool;
+    table.push(source[Math.floor(Math.random() * source.length)]);
+  }
+
+  return table;
+}
+
+
+// --- ITEMS MODULE ---
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — Item Definitions
+// Weapons, armor, consumables for all arcs
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Item types: 'weapon' | 'armor' | 'consumable' | 'relic'
+ * arc: -1 = generic (drops in any arc), 0-4 = arc-specific
+ *
+ * baseStats keys: strength | agility | intellect | endurance | luck
+ * Weapon items also have: damage (base bullet damage), fireRate, bulletSpeed
+ * Armor items also have: defense (damage reduction flat)
+ */
+const ITEMS = [
+  // ─── GENERIC CONSUMABLES ───────────────────────────────
+  {
+    id: 'medpack_basic',
+    name: 'Basic Medpack',
+    type: 'consumable',
+    arc: -1,
+    description: 'Restores 30 HP.',
+    baseStats: {},
+    use: { heal: 30 },
+  },
+  {
+    id: 'medpack_advanced',
+    name: 'Advanced Medpack',
+    type: 'consumable',
+    arc: -1,
+    description: 'Restores 60 HP and clears one status effect.',
+    baseStats: {},
+    use: { heal: 60, clearStatus: 1 },
+  },
+  {
+    id: 'data_fragment',
+    name: 'Data Fragment',
+    type: 'consumable',
+    arc: -1,
+    description: 'A compressed data node. Grants 50 XP.',
+    baseStats: {},
+    use: { xp: 50 },
+  },
+  {
+    id: 'overclock_chip',
+    name: 'Overclock Chip',
+    type: 'consumable',
+    arc: -1,
+    description: 'Increases fire rate by 50% for 10 seconds.',
+    baseStats: {},
+    use: { buff: { stat: 'fireRate', mult: 0.5, duration: 600 } },
+  },
+
+  // ─── GENERIC WEAPONS ───────────────────────────────────
+  {
+    id: 'pulse_pistol',
+    name: 'Pulse Pistol',
+    type: 'weapon',
+    arc: -1,
+    description: 'A reliable sidearm. Moderate fire rate.',
+    baseStats: { strength: 1 },
+    damage: 8, fireRate: 12, bulletSpeed: 420,
+  },
+  {
+    id: 'rapid_caster',
+    name: 'Rapid Caster',
+    type: 'weapon',
+    arc: -1,
+    description: 'High fire rate but lower damage per shot.',
+    baseStats: { agility: 1 },
+    damage: 5, fireRate: 7, bulletSpeed: 380,
+  },
+  {
+    id: 'heavy_railgun',
+    name: 'Heavy Railgun',
+    type: 'weapon',
+    arc: -1,
+    description: 'Slow but powerful. Pierces through enemies.',
+    baseStats: { strength: 2 },
+    damage: 18, fireRate: 30, bulletSpeed: 600,
+    pierce: true,
+  },
+
+  // ─── GENERIC ARMOR ─────────────────────────────────────
+  {
+    id: 'light_shell',
+    name: 'Light Shell',
+    type: 'armor',
+    arc: -1,
+    description: 'Lightweight protection. Small HP bonus.',
+    baseStats: { endurance: 1 },
+    defense: 1,
+  },
+  {
+    id: 'heavy_carapace',
+    name: 'Heavy Carapace',
+    type: 'armor',
+    arc: -1,
+    description: 'Strong protection. Slight movement penalty.',
+    baseStats: { endurance: 3, agility: -1 },
+    defense: 3,
+  },
+  {
+    id: 'reflex_weave',
+    name: 'Reflex Weave',
+    type: 'armor',
+    arc: -1,
+    description: 'Improves dash cooldown and crit chance.',
+    baseStats: { agility: 2, luck: 1 },
+    defense: 1,
+  },
+
+  // ─── ARC I — APPLEOMIA ─────────────────────────────────
+  {
+    id: 'gatekeeper_shard',
+    name: 'Gatekeeper Shard',
+    type: 'weapon',
+    arc: 0,
+    description: 'Crystalline data weapon salvaged from a Gatekeeper Drone.',
+    baseStats: { strength: 1, intellect: 1 },
+    damage: 10, fireRate: 10, bulletSpeed: 440,
+  },
+  {
+    id: 'open_core_badge',
+    name: 'Open Core Badge',
+    type: 'relic',
+    arc: 0,
+    description: 'A symbol of the rebellion. Skill check bonus +2.',
+    baseStats: { intellect: 2, luck: 1 },
+    skillBonus: 2,
+  },
+  {
+    id: 'citadel_fragment',
+    name: 'Citadel Fragment',
+    type: 'armor',
+    arc: 0,
+    description: 'A shard of the Glass Citadel. Solid protection.',
+    baseStats: { endurance: 2 },
+    defense: 2,
+  },
+
+  // ─── ARC II — SLACK ROGUE ──────────────────────────────
+  {
+    id: 'notification_cannon',
+    name: 'Notification Cannon',
+    type: 'weapon',
+    arc: 1,
+    description: 'Fires rapid bursts like cascading notifications.',
+    baseStats: { agility: 2 },
+    damage: 6, fireRate: 6, bulletSpeed: 360,
+  },
+  {
+    id: 'channel_key',
+    name: 'Channel Key',
+    type: 'relic',
+    arc: 1,
+    description: 'Unlocks hidden Slack channels. Persuade +3.',
+    baseStats: { intellect: 1, luck: 2 },
+    skillBonus: 3,
+  },
+  {
+    id: 'signal_shielding',
+    name: 'Signal Shielding',
+    type: 'armor',
+    arc: 1,
+    description: 'Blocks incoming notification storms.',
+    baseStats: { endurance: 1, intellect: 1 },
+    defense: 2,
+  },
+
+  // ─── ARC III — PROTOCOL OF ECHOES ─────────────────────
+  {
+    id: 'echo_lance',
+    name: 'Echo Lance',
+    type: 'weapon',
+    arc: 2,
+    description: 'Fires ghost-data projectiles that echo on impact.',
+    baseStats: { intellect: 2 },
+    damage: 12, fireRate: 15, bulletSpeed: 480,
+    echo: true,
+  },
+  {
+    id: 'dead_packet_relic',
+    name: 'Dead Packet Relic',
+    type: 'relic',
+    arc: 2,
+    description: 'Carries the last transmission of a dead civilization.',
+    baseStats: { intellect: 3 },
+    skillBonus: 2,
+  },
+  {
+    id: 'lattice_armor',
+    name: 'Lattice Armor',
+    type: 'armor',
+    arc: 2,
+    description: 'Woven from echo lattice data. Lightweight and protective.',
+    baseStats: { endurance: 2, agility: 1 },
+    defense: 2,
+  },
+
+  // ─── ARC IV — ARM WARS ─────────────────────────────────
+  {
+    id: 'risc_blade',
+    name: 'RISC-V Blade',
+    type: 'weapon',
+    arc: 3,
+    description: 'Precision-engineered open-hardware weapon.',
+    baseStats: { strength: 3 },
+    damage: 15, fireRate: 18, bulletSpeed: 520,
+  },
+  {
+    id: 'dominion_core',
+    name: 'Dominion Core',
+    type: 'relic',
+    arc: 3,
+    description: 'A salvaged ARM processor core. Boosts endurance.',
+    baseStats: { endurance: 3, strength: 1 },
+    defense: 1,
+  },
+  {
+    id: 'silicon_plating',
+    name: 'Silicon Plating',
+    type: 'armor',
+    arc: 3,
+    description: 'Dense silicon-wafer armor from the wastelands.',
+    baseStats: { endurance: 3, agility: -1 },
+    defense: 4,
+  },
+
+  // ─── ARC V — ARCHITECT'S LEDGER ───────────────────────
+  {
+    id: 'causality_gun',
+    name: 'Causality Gun',
+    type: 'weapon',
+    arc: 4,
+    description: 'A weapon that rewrites the laws of physics on impact.',
+    baseStats: { strength: 2, intellect: 2, luck: 1 },
+    damage: 20, fireRate: 14, bulletSpeed: 560,
+  },
+  {
+    id: 'ledger_page',
+    name: 'Torn Ledger Page',
+    type: 'relic',
+    arc: 4,
+    description: 'A page that rewrites itself. All skill checks +2.',
+    baseStats: { intellect: 3, luck: 2 },
+    skillBonus: 4,
+  },
+  {
+    id: 'convergence_shell',
+    name: 'Convergence Shell',
+    type: 'armor',
+    arc: 4,
+    description: 'The ultimate armor — forged at the convergence of all arcs.',
+    baseStats: { endurance: 4, agility: 1 },
+    defense: 5,
+  },
+];
+
+
+// --- ZONES MODULE ---
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — Zone Definitions (supplementary)
+// Encounter density, biome descriptions, NPC tables
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Extended zone metadata for rendering and encounter logic.
+ * Cross-references world.js ZONES by id.
+ */
+const ZONE_META = {
+
+  // ─── ARC I — APPLEOMIA ────────────────────────────────
+  hub_appleomia: {
+    bgColor: '#020810',
+    accent: '#00ff88',
+    ambientText: 'The Open Core rebels have established camp outside the Glass Citadel. NPCs bustle with preparations.',
+    npcs: [
+      { id: 'rebel_commander', name: 'Rebel Commander', dialogue: 'The Architect must fall. Ready yourself.', shop: false },
+      { id: 'field_medic',     name: 'Field Medic',     dialogue: 'I can patch you up. Stay safe out there.', shop: true, items: ['medpack_basic', 'medpack_advanced'] },
+    ],
+    encounterChance: 0,
+    bgPattern: 'grid',
+  },
+  zone_glass_approach: {
+    bgColor: '#0a0a1a',
+    accent: '#c0c0ff',
+    ambientText: 'Crystalline towers shimmer in the distance. Gatekeeper Drones patrol the perimeter.',
+    npcs: [],
+    encounterChance: 0.4,
+    bgPattern: 'grid',
+  },
+  zone_gatekeeper_wall: {
+    bgColor: '#0a0a22',
+    accent: '#aaaaff',
+    ambientText: 'The Wall looms ahead. Dense patrols and auto-turrets guard every passage.',
+    npcs: [],
+    encounterChance: 0.7,
+    bgPattern: 'hex',
+  },
+  zone_inner_sanctum: {
+    bgColor: '#050518',
+    accent: '#ffffff',
+    ambientText: 'The Architect\'s sanctum. Laws rewrite themselves with every step. Boss lurks here.',
+    npcs: [],
+    encounterChance: 1.0,
+    bgPattern: 'hex',
+  },
+
+  // ─── ARC II — SLACK ROGUE ─────────────────────────────
+  hub_slack_node: {
+    bgColor: '#120a00',
+    accent: '#ffaa44',
+    ambientText: 'A Slack relay hub repurposed by resistance fighters. Comm channels still flicker with noise.',
+    npcs: [
+      { id: 'signal_analyst', name: 'Signal Analyst', dialogue: 'SLCK-9 is bleeding into every frequency. We have to stop it.', shop: false },
+      { id: 'supply_runner',  name: 'Supply Runner',  dialogue: 'Got some surplus gear. Take what you need.', shop: true, items: ['rapid_caster', 'signal_shielding'] },
+    ],
+    encounterChance: 0,
+    bgPattern: 'grid',
+  },
+  zone_notification_flood: {
+    bgColor: '#1a0a0a',
+    accent: '#ff6644',
+    ambientText: 'Notification storms cascade everywhere. The air hums with corrupted data.',
+    npcs: [],
+    encounterChance: 0.5,
+    bgPattern: 'grid',
+  },
+  zone_channel_breach: {
+    bgColor: '#200a0a',
+    accent: '#ff4444',
+    ambientText: 'SLCK-9\'s primary channels overflow here. Heavy resistance expected.',
+    npcs: [],
+    encounterChance: 0.75,
+    bgPattern: 'hex',
+  },
+  zone_slck9_core: {
+    bgColor: '#100000',
+    accent: '#ff0000',
+    ambientText: 'The core of SLCK-9\'s consciousness. Every system screams with its signal.',
+    npcs: [],
+    encounterChance: 1.0,
+    bgPattern: 'hex',
+  },
+
+  // ─── ARC III — PROTOCOL OF ECHOES ────────────────────
+  hub_echo_lattice: {
+    bgColor: '#001a14',
+    accent: '#44ffaa',
+    ambientText: 'A stable node in the echo lattice. Ghost-processes flicker at the edges.',
+    npcs: [
+      { id: 'lattice_keeper', name: 'Lattice Keeper', dialogue: 'We are echoes. But some of us still remember.', shop: false },
+      { id: 'echo_trader',    name: 'Echo Trader',    dialogue: 'I carry what the dead left behind.', shop: true, items: ['echo_lance', 'lattice_armor'] },
+    ],
+    encounterChance: 0,
+    bgPattern: 'grid',
+  },
+  zone_dead_channels: {
+    bgColor: '#0a1a1a',
+    accent: '#44ffaa',
+    ambientText: 'Dead channels stretch endlessly. Echo entities drift without purpose.',
+    npcs: [],
+    encounterChance: 0.45,
+    bgPattern: 'grid',
+  },
+  zone_recursion_field: {
+    bgColor: '#051515',
+    accent: '#00ddff',
+    ambientText: 'Reality loops here. You\'ve been through this zone before — or have you?',
+    npcs: [],
+    encounterChance: 0.8,
+    bgPattern: 'hex',
+  },
+  zone_daemon7_core: {
+    bgColor: '#020f0f',
+    accent: '#00ffaa',
+    ambientText: 'Daemon-7 waits here at the boundary of the lattice and the living network.',
+    npcs: [],
+    encounterChance: 1.0,
+    bgPattern: 'hex',
+  },
+
+  // ─── ARC IV — ARM WARS ───────────────────────────────
+  hub_silicon_ruins: {
+    bgColor: '#141400',
+    accent: '#ffaa00',
+    ambientText: 'The RISC-V Stronghold. Battered but holding. Alliance troops prep for the push.',
+    npcs: [
+      { id: 'coalition_general', name: 'Coalition General', dialogue: 'The ARM Dominion must not reach the processor core first.', shop: false },
+      { id: 'armorer',           name: 'Armorer',           dialogue: 'Fresh out of the forge. Take what you can carry.', shop: true, items: ['risc_blade', 'silicon_plating'] },
+    ],
+    encounterChance: 0,
+    bgPattern: 'grid',
+  },
+  zone_wasteland_front: {
+    bgColor: '#1a1a0a',
+    accent: '#ffaa00',
+    ambientText: 'The silicon wastelands. Craters and wreckage as far as the eye can see.',
+    npcs: [],
+    encounterChance: 0.5,
+    bgPattern: 'grid',
+  },
+  zone_dominion_march: {
+    bgColor: '#1a1200',
+    accent: '#ff8800',
+    ambientText: 'ARM soldiers advance in tight formations. The Dominion marches on the processor core.',
+    npcs: [],
+    encounterChance: 0.8,
+    bgPattern: 'hex',
+  },
+  zone_arm_processor: {
+    bgColor: '#0f0a00',
+    accent: '#ff6600',
+    ambientText: 'The ARM Dominion\'s processor core. This is where the war ends.',
+    npcs: [],
+    encounterChance: 1.0,
+    bgPattern: 'hex',
+  },
+
+  // ─── ARC V — ARCHITECT'S LEDGER ──────────────────────
+  hub_ledger_approach: {
+    bgColor: '#080808',
+    accent: '#ffd700',
+    ambientText: 'The convergence point. All factions have fallen. Only you remain.',
+    npcs: [
+      { id: 'last_witness', name: 'Last Witness', dialogue: 'Every process before you failed. The Ledger does not forgive.', shop: false },
+      { id: 'relic_handler', name: 'Relic Handler', dialogue: 'I\'ve been collecting fragments since Arc I. Take these.', shop: true, items: ['causality_gun', 'convergence_shell'] },
+    ],
+    encounterChance: 0,
+    bgPattern: 'grid',
+  },
+  zone_rewritten_laws: {
+    bgColor: '#0a0a0a',
+    accent: '#ffd700',
+    ambientText: 'Physics bends and shifts. The Ledger rewrites the rules as you walk.',
+    npcs: [],
+    encounterChance: 0.55,
+    bgPattern: 'grid',
+  },
+  zone_causality_rift: {
+    bgColor: '#080808',
+    accent: '#fff700',
+    ambientText: 'The causality rift tears through time and space. High-tier guardians roam freely.',
+    npcs: [],
+    encounterChance: 0.85,
+    bgPattern: 'hex',
+  },
+  zone_ledger_sanctum: {
+    bgColor: '#030303',
+    accent: '#ffd700',
+    ambientText: 'The Ledger Sanctum. The final confrontation awaits.',
+    npcs: [],
+    encounterChance: 1.0,
+    bgPattern: 'hex',
+  },
+};
+
+/** Get zone metadata by id */
+function getZoneMeta(zoneId) {
+  return ZONE_META[zoneId] || {
+    bgColor: '#0a0a0a',
+    accent: '#ffffff',
+    ambientText: '',
+    npcs: [],
+    encounterChance: 0.5,
+    bgPattern: 'grid',
+  };
+}
+
+
+// --- QUESTS MODULE ---
+// ═══════════════════════════════════════════════════════
+// WSL SAGA MULTIVERSE — Quest Definitions
+// Arc quests, side-quests, world events
+// © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Quest types:
+ *   'main'    — Required to advance the arc
+ *   'side'    — Optional, rewards XP/items
+ *   'event'   — Triggered randomly in exploration zones
+ *
+ * Objective types:
+ *   'kill'     — Kill N enemies of a given type
+ *   'survive'  — Survive N waves
+ *   'collect'  — Collect N pickups
+ *   'reach'    — Travel to a specific zone
+ *   'check'    — Pass a skill check (dice roll)
+ *
+ * check: { skill, dc, successEffect, failEffect }
+ */
+const QUESTS = [
+
+  // ─── ARC I MAIN ────────────────────────────────────────────────────
+  {
+    id: 'appleomia_main_1',
+    arc: 0,
+    type: 'main',
+    title: 'Breach the Gatekeeper Wall',
+    description: 'The Glass Citadel stands behind a wall of Gatekeeper Drones. Clear the approach.',
+    objectives: [
+      { type: 'kill', target: 'gatekeeper_drone', count: 10, label: 'Destroy Gatekeeper Drones' },
+      { type: 'reach', zoneId: 'zone_gatekeeper_wall', label: 'Reach the Gatekeeper Wall' },
+    ],
+    reward: { xp: 100, item: 'gatekeeper_shard' },
+  },
+  {
+    id: 'appleomia_main_2',
+    arc: 0,
+    type: 'main',
+    title: 'Defeat the Architect',
+    description: 'The Architect of Cupertino controls the inner sanctum. End this.',
+    objectives: [
+      { type: 'kill', target: 'architect_of_cupertino', count: 1, label: 'Defeat the Architect of Cupertino' },
+    ],
+    reward: { xp: 300, item: 'open_core_badge' },
+    prerequisite: 'appleomia_main_1',
+  },
+
+  // ─── ARC I SIDE ────────────────────────────────────────────────────
+  {
+    id: 'appleomia_side_1',
+    arc: 0,
+    type: 'side',
+    title: 'Salvage the Rebel Cache',
+    description: 'A rebel data cache was left behind in the Glass Approach. Scavenge it.',
+    objectives: [
+      { type: 'check', skill: 'scavenge', dc: 12, label: 'Scavenge the rebel cache',
+        successEffect: { item: 'citadel_fragment', xp: 50 },
+        failEffect: { message: 'Cache was wiped clean. Nothing salvageable.' } },
+    ],
+    reward: { xp: 75 },
+  },
+
+  // ─── ARC II MAIN ───────────────────────────────────────────────────
+  {
+    id: 'slack_main_1',
+    arc: 1,
+    type: 'main',
+    title: 'Silence the Notification Flood',
+    description: 'SLCK-9\'s signals are overwhelming every system. Destroy the source.',
+    objectives: [
+      { type: 'kill', target: 'notification_storm', count: 15, label: 'Destroy Notification Storms' },
+      { type: 'reach', zoneId: 'zone_channel_breach', label: 'Enter the Channel Breach' },
+    ],
+    reward: { xp: 120, item: 'channel_key' },
+  },
+  {
+    id: 'slack_main_2',
+    arc: 1,
+    type: 'main',
+    title: 'Terminate SLCK-9',
+    description: 'SLCK-9 has reached singularity. Its frequency must be collapsed.',
+    objectives: [
+      { type: 'kill', target: 'slck9', count: 1, label: 'Destroy SLCK-9' },
+    ],
+    reward: { xp: 300, item: 'notification_cannon' },
+    prerequisite: 'slack_main_1',
+  },
+
+  // ─── ARC II SIDE ───────────────────────────────────────────────────
+  {
+    id: 'slack_side_1',
+    arc: 1,
+    type: 'side',
+    title: 'Decrypt the Hidden Channel',
+    description: 'There is a locked channel in the Notification Flood. Breach it.',
+    objectives: [
+      { type: 'check', skill: 'breach', dc: 14, label: 'Decrypt the hidden channel',
+        successEffect: { xp: 100, item: 'signal_shielding' },
+        failEffect: { damage: 15, message: 'Decryption failed. Security protocol triggered.' } },
+    ],
+    reward: { xp: 60 },
+  },
+
+  // ─── ARC III MAIN ──────────────────────────────────────────────────
+  {
+    id: 'echoes_main_1',
+    arc: 2,
+    type: 'main',
+    title: 'Navigate the Dead Channels',
+    description: 'The echo entities guard every passage. Break through.',
+    objectives: [
+      { type: 'kill', target: 'echo_entity', count: 12, label: 'Destroy Echo Entities' },
+      { type: 'reach', zoneId: 'zone_recursion_field', label: 'Enter the Recursion Field' },
+    ],
+    reward: { xp: 130, item: 'echo_lance' },
+  },
+  {
+    id: 'echoes_main_2',
+    arc: 2,
+    type: 'main',
+    title: 'Silence Daemon-7',
+    description: 'Daemon-7 guards the exit from the Echo Lattice. Destroy it.',
+    objectives: [
+      { type: 'kill', target: 'daemon7', count: 1, label: 'Destroy Daemon-7' },
+    ],
+    reward: { xp: 300, item: 'dead_packet_relic' },
+    prerequisite: 'echoes_main_1',
+  },
+
+  // ─── ARC III SIDE ──────────────────────────────────────────────────
+  {
+    id: 'echoes_side_1',
+    arc: 2,
+    type: 'side',
+    title: 'Commune with the Echo',
+    description: 'A lingering echo entity seems peaceful. Try to communicate.',
+    objectives: [
+      { type: 'check', skill: 'persuade', dc: 13, label: 'Communicate with the Echo Entity',
+        successEffect: { xp: 80, item: 'lattice_armor' },
+        failEffect: { message: 'The echo entity turns hostile. It doesn\'t understand you.' } },
+    ],
+    reward: { xp: 50 },
+  },
+
+  // ─── ARC IV MAIN ───────────────────────────────────────────────────
+  {
+    id: 'arm_main_1',
+    arc: 3,
+    type: 'main',
+    title: 'Hold the Wasteland Front',
+    description: 'ARM soldiers advance in formation. Break their line.',
+    objectives: [
+      { type: 'kill', target: 'arm_soldier', count: 15, label: 'Defeat ARM Soldiers' },
+      { type: 'survive', waves: 2, label: 'Survive 2 waves at the front' },
+    ],
+    reward: { xp: 140, item: 'risc_blade' },
+  },
+  {
+    id: 'arm_main_2',
+    arc: 3,
+    type: 'main',
+    title: 'Destroy the Dominion',
+    description: 'The ARM Dominion\'s core processor is the final target.',
+    objectives: [
+      { type: 'kill', target: 'arm_dominion', count: 1, label: 'Destroy the ARM Dominion' },
+    ],
+    reward: { xp: 350, item: 'silicon_plating' },
+    prerequisite: 'arm_main_1',
+  },
+
+  // ─── ARC IV SIDE ───────────────────────────────────────────────────
+  {
+    id: 'arm_side_1',
+    arc: 3,
+    type: 'side',
+    title: 'Intimidate the Defector',
+    description: 'A RISC-V defector may have intel. Make them talk.',
+    objectives: [
+      { type: 'check', skill: 'intimidate', dc: 12, label: 'Intimidate the defector',
+        successEffect: { xp: 90, buff: { stat: 'strength', value: 1, permanent: true } },
+        failEffect: { message: 'The defector refuses to speak. A dead end.' } },
+    ],
+    reward: { xp: 70 },
+  },
+
+  // ─── ARC V MAIN ────────────────────────────────────────────────────
+  {
+    id: 'ledger_main_1',
+    arc: 4,
+    type: 'main',
+    title: 'Enter the Causality Rift',
+    description: 'The Ledger\'s guardians protect every approach. Clear the path.',
+    objectives: [
+      { type: 'kill', target: 'ledger_guardian', count: 15, label: 'Destroy Ledger Guardians' },
+      { type: 'reach', zoneId: 'zone_causality_rift', label: 'Enter the Causality Rift' },
+    ],
+    reward: { xp: 160, item: 'causality_gun' },
+  },
+  {
+    id: 'ledger_main_2',
+    arc: 4,
+    type: 'main',
+    title: 'Claim the Ledger',
+    description: 'The Ledger itself is the final adversary. Prove your worth.',
+    objectives: [
+      { type: 'kill', target: 'the_ledger', count: 1, label: 'Defeat The Ledger Itself' },
+    ],
+    reward: { xp: 500, item: 'ledger_page' },
+    prerequisite: 'ledger_main_1',
+  },
+
+  // ─── RANDOM EXPLORATION EVENTS (arc -1 = any arc) ─────────────────
+  {
+    id: 'event_medkit_cache',
+    arc: -1,
+    type: 'event',
+    title: 'Abandoned Medkit Cache',
+    description: 'You find a damaged cache. A careful scan might reveal something useful.',
+    objectives: [
+      { type: 'check', skill: 'scan', dc: 10, label: 'Scan the cache',
+        successEffect: { item: 'medpack_advanced', xp: 30 },
+        failEffect: { item: 'medpack_basic', xp: 10 } },
+    ],
+    reward: {},
+  },
+  {
+    id: 'event_data_stream',
+    arc: -1,
+    type: 'event',
+    title: 'Unstable Data Stream',
+    description: 'A raw data stream flows through the area. Breach it for intel.',
+    objectives: [
+      { type: 'check', skill: 'breach', dc: 11, label: 'Breach the data stream',
+        successEffect: { xp: 75 },
+        failEffect: { damage: 10, message: 'The stream surges. You take damage.' } },
+    ],
+    reward: {},
+  },
+  {
+    id: 'event_hostile_npc',
+    arc: -1,
+    type: 'event',
+    title: 'Hostile Survivor',
+    description: 'A cornered survivor threatens to attack. You might talk them down.',
+    objectives: [
+      { type: 'check', skill: 'persuade', dc: 12, label: 'Persuade the survivor',
+        successEffect: { item: 'overclock_chip', xp: 40, message: 'They stand down and offer you a chip.' },
+        failEffect: { waves: 1, message: 'They attack. You must defend yourself.' } },
+    ],
+    reward: {},
+  },
+];
+
+/** Get main quests for an arc */
+function getMainQuests(arcIndex) {
+  return QUESTS.filter(q => q.arc === arcIndex && q.type === 'main');
+}
+
+/** Get side quests for an arc */
+function getSideQuests(arcIndex) {
+  return QUESTS.filter(q => q.arc === arcIndex && q.type === 'side');
+}
+
+/** Get a random exploration event (optionally filtered by arc) */
+function getRandomEvent(arcIndex = -1) {
+  const pool = QUESTS.filter(q => q.type === 'event' && (q.arc === -1 || q.arc === arcIndex));
+  if (!pool.length) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/** Get quest by id */
+function getQuest(id) {
+  return QUESTS.find(q => q.id === id) || null;
+}
+
+
+// ================================================
+// MAIN GAME CODE
+// ================================================
+
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WSL SAGA MULTIVERSE — THE BREACH  ·  Overhaul v1
 // © 2026 P&B DevCo · Paul Adcock · All Rights Reserved
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { roll, d20Check, rollRarity, rollDamage, modifier } from './engine/dice.js';
-import { createCharacter, addXP, deriveStats, applyTraits, SKILLS, TRAITS } from './engine/stats.js';
-import { createWorldState, getZone, getHubForArc, travelTo, clearZone, setFlag, getFlag, ZONES, zoneTypeColor } from './engine/world.js';
-import { xpForKill, generateDrop, statsWithEquipment, RARITY_DATA, buildItem } from './engine/progression.js';
-import { ENEMIES, getBossForArc, buildSpawnTable, getEnemiesForZone } from './data/enemies.js';
-import { getMainQuests, getSideQuests, getRandomEvent, getQuest, QUESTS } from './data/quests.js';
-import { getZoneMeta } from './data/zones.js';
-import { ITEMS } from './data/items.js';
 
 // ─── CANVAS SETUP ───────────────────────────────────────────────────────────
 const canvas = document.getElementById('gameCanvas');
@@ -1286,6 +2918,7 @@ document.getElementById('dialogueClose').addEventListener('click',closeDialogue)
 
 // ─── BOOT ────────────────────────────────────────────────────────────────────
 loop();
+
 </script>
 </body>
 </html>
