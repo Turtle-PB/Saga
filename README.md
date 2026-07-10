@@ -57,29 +57,106 @@ Features all 5 arcs with AI-generated cinematic artwork, Ken Burns zoom effects,
 
 ---
 
-## 🎮 Play the Game — *The Breach*
+## 🎮 Play the Game — *The Breach* (Overhaul v1)
 
 ### ▶️ **[CLICK HERE TO PLAY — NO DOWNLOAD REQUIRED](https://turtle-pb.github.io/Saga/)**
 
 > The game runs instantly in your browser via GitHub Pages. No install, no setup, no account.
 
 ### Prefer to download?
-🎮 **[WSL_Saga_Multiverse_Game.html](WSL_Saga_Multiverse_Game.html)** — Self-contained HTML5 file, works offline
+🎮 **[WSL_Saga_Multiverse_Game.html](WSL_Saga_Multiverse_Game.html)** — Self-contained offline version (classic mode)
 
-### How to Play
-- **WASD / Arrow Keys** — Move
-- **Mouse** — Aim
-- **Click** — Fire
-- **SPACE** — Dash
-- **E / ESC** — Advance dialogue
+---
 
-### Game Features
-- 5 playable arcs, each with unique enemies, bosses, and story dialogue
-- Fight iconic bosses: The Architect of Cupertino, SLCK-9, Daemon-7, The ARM Dominion, and The Ledger itself
-- Progressive difficulty with wave-based enemy spawns
-- Data fragment pickups restore health and boost score
-- Story-accurate lore pulled directly from the IP documents
-- Beat each arc to unlock the next in the saga
+### 🕹️ Controls
+
+| Key | Action |
+|-----|--------|
+| **WASD / Arrow Keys** | Move |
+| **Mouse** | Aim |
+| **Click** | Fire |
+| **SPACE** | Dash |
+| **E** | Advance dialogue / Interact |
+| **TAB / ESC** | Toggle Hub screen |
+
+---
+
+### 🔁 Gameplay Loop
+
+```
+HUB (safe zone, NPCs, quests)
+  ↓
+ZONE MAP (choose where to explore)
+  ↓
+EXPLORE / COMBAT (waves of enemies, random skill-check events)
+  ↓
+LOOT SCREEN (item drops, click to equip)
+  ↓
+PROGRESSION (XP gained, level up, stat points, trait unlocks)
+  ↓
+BOSS → ARC CLEARED → NEXT ARC
+```
+
+---
+
+### ⚔️ Game Features — Overhaul v1
+
+**Tabletop RPG Systems**
+- Character sheet: 5 core stats (STR / AGI / INT / END / LCK)
+- 8 skills mapped to stats (Breach, Persuade, Intimidate, Stealth, Survive, Scan, Scavenge, First Aid)
+- d20 + modifier skill checks for events and interactions — roll the dice, see consequences
+- 8 passive traits unlock as you level (Quick Draw, Iron Will, Berserker, Ghost, and more)
+
+**Open-World Zone Framework**
+- 20 connected zones across 5 arcs (hub, explore, danger, boss types)
+- Hub zones are safe — NPCs, quest board, character sheet, travel map
+- Danger and boss zones have high enemy density and better loot
+
+**Combat & Enemies**
+- 6 enemy archetypes with distinct AI: Chaser, Sniper, Swarmer, Shielder, Bomber, Boss
+- Elite tier enemies marked with gold ring — tougher, better drops
+- 5 boss encounters with unique orbital attack patterns and spread fire
+
+**Loot & Progression**
+- 5 item rarity tiers: Common → Uncommon → Rare → Epic → Legendary
+- 3 equipment slots: Weapon, Armor, Relic
+- 10 item affixes: Burning, Shocking, Lifesteal, Explosive, Phasing, and more
+- XP system with leveling, stat allocation, and milestone trait unlocks
+
+**Quests**
+- Main quests per arc with kill and travel objectives
+- Side quests with optional skill checks
+- Random exploration events with dice-roll consequences
+
+**Data-Driven Content**
+- All enemies, items, zones, and quests defined in separate `/data/` files
+- Easy to extend — see [CONTENT_GUIDE.md](CONTENT_GUIDE.md)
+
+---
+
+### 🏃 Run Locally
+
+```bash
+# Clone the repo
+git clone https://github.com/Turtle-PB/Saga.git
+cd Saga
+
+# Serve locally (required for ES module imports)
+npx serve .         # or: python3 -m http.server 8080
+# Open: http://localhost:3000  (or :8080)
+```
+
+> **Note:** ES modules require a local server — double-clicking `index.html` will not work without one. The offline version `WSL_Saga_Multiverse_Game.html` works without a server.
+
+---
+
+### 📄 Documentation
+
+| File | Description |
+|------|-------------|
+| [GAME_DESIGN.md](GAME_DESIGN.md) | Full systems reference: stats, checks, loot, zones, enemies |
+| [CONTENT_GUIDE.md](CONTENT_GUIDE.md) | How to add new enemies, items, zones, quests |
+| [ROADMAP.md](ROADMAP.md) | Planned features, known limitations, version history |
 
 ---
 
